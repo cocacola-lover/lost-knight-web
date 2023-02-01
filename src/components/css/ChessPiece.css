@@ -1,0 +1,12 @@
+.ChessPiece {
+    height: 90%;
+    width: 90%;
+    transform: translate(0, 0);
+}
+
+.ChessPiece.white {
+    border: 1px solid #f0f0f0;
+}
+.ChessPiece.black {
+    border: 1px solid #5f5955;
+}
