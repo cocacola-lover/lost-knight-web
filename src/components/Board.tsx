@@ -15,7 +15,35 @@ interface Square {
     other : Object | null
 }
 
-interface BoardProps {
+interface BaseBoardProps {
+    height : number,
+    width : number,
+    squares : Square[][],
+    knightPosition : Position
+    flagPosition : Position
+    boardRef? : React.RefObject<HTMLDivElement>
+    createTile : (square : Square, pos: Position) => JSX.Element
+
+}
+
+// Base function
+
+function BaseBoard (props : BaseBoardProps) {
+    return (
+        <div className="Board" 
+             ref={props.boardRef} 
+             style={{gridTemplate : `repeat(${props.height}, 1fr) / repeat(${props.width}, 1fr)`, width : `${size}px`, height : `${size * props.height / props.width}px`}}>
+                {
+                props.squares.map((row, index1) => 
+                        row.map((square, index2) => 
+                            props.createTile(square, new Position(index1, index2))))
+                }
+        </div>
+        )}
+
+// Extensions after that
+
+interface MovableBoardProps {
     height : number,
     width : number,
     squares : Square[][],
@@ -25,7 +53,7 @@ interface BoardProps {
     setFlagPosition : React.Dispatch<React.SetStateAction<Position>>
 }
 
-export default function Board (props : BoardProps) {
+export function MovableBoard (props : MovableBoardProps) {
 
     const {flagPosition, knightPosition, setFlagPosition, setKnightPosition} = props;
     const [shadow, setShadow] = useState<Position>(new Position(0, 0));
@@ -97,37 +125,27 @@ export default function Board (props : BoardProps) {
         ></MovableChessPiece>
     }
 
-    return (
-    <div ref={boardRef} className="Board" 
-        style={
-                {gridTemplate : `repeat(${props.height}, 1fr) / repeat(${props.width}, 1fr)`,
-                width : `${size}px`, height : `${size * props.height / props.width}px`}
-                }>
+    return <BaseBoard boardRef={boardRef} 
+            height={props.height} width={props.width} squares={props.squares} knightPosition={props.knightPosition} flagPosition={props.flagPosition}
+            createTile={
+                (square : Square, pos : Position) => 
+                <SensibleTile 
+                    key={`${pos.y},${pos.x}`} 
+                    onDragEnter={() => {setShadow(pos)}}
+                    black={(pos.y + pos.x) % 2 === 1}>
 
-            {props.squares.map((row, index1) => row.map((square, index2) => {
+                    {/* Put knight and flag to their place */}
 
-            const tilePosition = new Position(index1, index2);
+                    { 
+                    Position.same(pos, knightPosition) ? 
+                        MovablePiece(setKnightMoving, pos.x + pos.y, KnightSVG) : null
+                    }
 
-            // Build tiles for the board
+                    {
+                    Position.same(pos, flagPosition) ? 
+                        MovablePiece(setFlagMoving, pos.x + pos.y, FlagSVG) : null
+                    }
 
-            return <SensibleTile 
-            key={`${index1},${index2}`} 
-            onDragEnter={() => {setShadow(tilePosition)}}
-            black={(index1 + index2) % 2 === 1}>
-
-                {/* Put knight and flag to their place */}
-
-                { 
-                Position.same(tilePosition, knightPosition) ? 
-                    MovablePiece(setKnightMoving, index1 + index2, KnightSVG) : null
-                }
-
-                {
-                Position.same(tilePosition, flagPosition) ? 
-                    MovablePiece(setFlagMoving, index1 + index2, FlagSVG) : null
-                }
-            </SensibleTile>
-        }))}
-    </div>)
-
+                </SensibleTile>                
+            }/>
 }
