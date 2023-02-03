@@ -5,34 +5,48 @@ interface BaseTileProps {
     black? : boolean
     children? : any
     tileRef? : React.RefObject<HTMLDivElement>
+    passable? : boolean
 }
 
 
-function BaseTile ({black, children, tileRef} : BaseTileProps) {
+function BaseTile (props : BaseTileProps) {
 
-    const color = black ? "black" : "white";
+    const color = props.black ? 'black' : 'white';
+    const passable = props.passable === false ? 'unpassable' : 'passable';
 
-    return <div ref={tileRef} className={`Tile ${color}`}>
-        {children}
+    return <div ref={props.tileRef} className={`Tile ${color} ${passable}`}>
+        {props.children}
     </div>
 }
 
 interface SensibleTileProps {
-    onDragEnter : () => void
+    onDragEnter? : (event : DragEvent) => void
+    onMouseDown? : (event : Event) => void
+    onMouseEnter? : (event : Event) => void
+    onMouseUp? : (event : Event) => void
     black? : boolean
+    passable? : boolean
     children? : any
 }
 
 export function SensibleTile (props : SensibleTileProps) {
     const tileRef = useRef<HTMLDivElement>(null);
 
-    // On dragenter
-
     useEffect(() => {
-            const tile = tileRef.current
-            tile?.addEventListener("dragenter", props.onDragEnter);
-            return () => tile?.removeEventListener("dragenter", props.onDragEnter);
+        const {onDragEnter, onMouseDown, onMouseEnter, onMouseUp} = props;
+        const tile = tileRef.current
+        if (onDragEnter !== undefined) tile?.addEventListener("dragenter", onDragEnter);
+        if (onMouseEnter !== undefined) tile?.addEventListener("mouseenter", onMouseEnter);
+        if (onMouseDown !== undefined) tile?.addEventListener("mousedown", onMouseDown);
+        if (onMouseUp !== undefined) tile?.addEventListener("mouseup", onMouseUp);
+
+        return () => {
+            if (onDragEnter !== undefined) tile?.removeEventListener("dragenter", onDragEnter);
+            if (onMouseEnter !== undefined) tile?.removeEventListener("mouseenter", onMouseEnter);
+            if (onMouseDown !== undefined) tile?.removeEventListener("mousedown", onMouseDown);
+            if (onMouseUp !== undefined) tile?.removeEventListener("mouseup", onMouseUp);
+        }
         })
 
-    return <BaseTile tileRef={tileRef} black={props.black}>{props.children}</BaseTile>
+    return <BaseTile tileRef={tileRef} passable={props.passable} black={props.black}>{props.children}</BaseTile>
 }
