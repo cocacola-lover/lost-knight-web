@@ -11,3 +11,7 @@
 .Tile.black {
     background-color: #b58863;
 }
+
+.Tile.unpassable {
+    background-color: black;
+}
