@@ -47,7 +47,7 @@ export function MovableChessPiece (props : MovableChessPieceProps) {
 
         chessPiece?.addEventListener("dragstart", handleDragStart);
         return () => chessPiece?.removeEventListener("dragstart", handleDragStart);
-    });
+    }, [props]);
 
     return <ChessPiece 
     child={props.child} 
