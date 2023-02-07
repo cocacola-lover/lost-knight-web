@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 
-import { SensibleTile } from "./Tile";
+import { SensibleTile, DisplayTile, TileLogic } from "./Tile";
 import { ChessPiece, MovableChessPiece, KnightSVG, FlagSVG } from "./ChessPiece";
+import { Board, ChessPointer, dijkstraSearchIterator, SearchResult } from '@cocacola-lover/knight_path_finder';
+import Mapping2D from '../logic/mapping2d';
+
+
 import Position from "../logic/position";
 
 import './css/Board.css';
@@ -171,7 +175,7 @@ enum PenState {
     DrawImpassable
 }
 
-export function DrawableBoard (this: any, props : DrawableBoardProps) {
+export function DrawableBoard (props : DrawableBoardProps) {
 
     const [penState, setPenState] = useState<PenState>(PenState.Inactive);
 
@@ -231,6 +235,113 @@ export function DrawableBoard (this: any, props : DrawableBoardProps) {
                     }
 
                     </SensibleTile>
+                }
+            }/>
+}
+
+interface DisplayBoardProps {
+    height : number
+    width : number
+    knightPosition : Position
+    flagPosition : Position
+    getPassability : (position : Position) => boolean
+}
+
+export function DisplayBoard (props : DisplayBoardProps) {
+
+    const {width, height} = props;
+
+    const [foundMapping, setFoundMapping] = useState(new Mapping2D<boolean>(height, width, false));
+    const [visitedMapping, setVisitedMapping] = useState(new Mapping2D<boolean>(height, width, false));
+
+    const boardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+
+        console.log("Display board updating");
+
+        const {width, height, knightPosition, flagPosition} = props;
+        const board = boardRef.current;
+
+        const logicBoard = new Board(width, height);
+        const startPosition = new ChessPointer(
+            knightPosition.y, knightPosition.x, logicBoard.squares);
+        const endPosition = new ChessPointer(
+            flagPosition.y, flagPosition.x, logicBoard.squares);
+
+        const ite = dijkstraSearchIterator(startPosition, endPosition);
+
+        const parceFound = () => {
+            const ans = new Mapping2D<boolean>(height, width, false);
+
+            logicBoard.squares.forEach((row, index1) => {
+                row.forEach((value, index2) => {
+                    ans.setAt(new Position(index1, index2), value.distanceFromStart !== undefined);
+                })
+            });
+
+            setFoundMapping(ans);
+        };
+
+        const addVisited = (newVisited : ChessPointer) => {
+
+            setVisitedMapping((prevMapping) => {
+                const ans = prevMapping.copy();
+
+                ans.setAt( new Position(newVisited.y, newVisited.x), true);
+                return ans;
+
+            });
+
+        }
+
+        const iterateDisplay = () => {
+            
+            const ans = ite();
+
+            console.log("iterate", ans)
+            console.log(startPosition, endPosition);
+            
+            if (ans.result === SearchResult.SearchContinues) {
+                addVisited(ans.to as ChessPointer);
+                parceFound();
+            }
+            
+        }
+
+        board?.addEventListener('click', iterateDisplay);
+
+        return () => board?.removeEventListener('click', iterateDisplay);
+    }, [props])
+    
+    return <BaseBoard boardRef={boardRef}
+            height={props.height} width={props.width} getPassability={props.getPassability} knightPosition={props.knightPosition} flagPosition={props.flagPosition}
+            createTile={
+                (passable, pos) => {
+
+                    let tileLogic = TileLogic.notFound;
+                    if (foundMapping.at(pos)) tileLogic = TileLogic.found;
+                    if (visitedMapping.at(pos)) tileLogic = TileLogic.visited;
+
+                    return <DisplayTile
+                    key={`${pos.y},${pos.x}`}
+                    black={(pos.y + pos.x) % 2 === 1}
+                    passable={passable}
+                    tileLogic={tileLogic}>
+
+                    {/* Put knight and flag to their place */}
+
+                    { 
+                    Position.same(pos, props.knightPosition) ? 
+                        <ChessPiece child={KnightSVG} black={(pos.y + pos.x) % 2 === 0}/> : null
+                    }
+
+                    {
+                    Position.same(pos, props.flagPosition) ? 
+                    <ChessPiece child={FlagSVG} black={(pos.y + pos.x) % 2 === 0}/> : null
+                    }
+
+                    </DisplayTile>
                 }
             }/>
 }
