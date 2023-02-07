@@ -15,3 +15,15 @@
 .Tile.unpassable {
     background-color: black;
 }
+
+.Tile.found {
+    background-color: yellow;
+}
+
+.Tile.visited {
+    background-color: red;
+}
+
+.Tile.road {
+    background-color: green;
+}
