@@ -6,6 +6,7 @@ interface BaseTileProps {
     children? : any
     tileRef? : React.RefObject<HTMLDivElement>
     passable? : boolean
+    additionalClassName? : string
 }
 
 
@@ -14,7 +15,7 @@ function BaseTile (props : BaseTileProps) {
     const color = props.black ? 'black' : 'white';
     const passable = props.passable === false ? 'unpassable' : 'passable';
 
-    return <div ref={props.tileRef} className={`Tile ${color} ${passable}`}>
+    return <div ref={props.tileRef} className={`Tile ${color} ${passable} ${props.additionalClassName}`}>
         {props.children}
     </div>
 }
@@ -46,7 +47,40 @@ export function SensibleTile (props : SensibleTileProps) {
             if (onMouseDown !== undefined) tile?.removeEventListener("mousedown", onMouseDown);
             if (onMouseUp !== undefined) tile?.removeEventListener("mouseup", onMouseUp);
         }
-        })
+        }, [props])
 
     return <BaseTile tileRef={tileRef} passable={props.passable} black={props.black}>{props.children}</BaseTile>
+}
+
+export enum TileLogic {
+    notFound,
+    found,
+    visited
+}
+
+interface DisplayTileProps {
+    black? : boolean
+    passable? : boolean
+    children? : any
+    tileLogic? : TileLogic
+}
+
+export function DisplayTile (props : DisplayTileProps) {
+    const tileRef = useRef<HTMLDivElement>(null);
+
+    let tileLogic : string;
+
+    switch(props.tileLogic ?? TileLogic.notFound) {
+        case TileLogic.notFound :
+            tileLogic = '';
+            break;
+        case TileLogic.found : 
+            tileLogic = 'found';
+            break;
+        case TileLogic.visited : 
+            tileLogic = 'visited';
+            break;
+    }
+
+    return <BaseTile additionalClassName={tileLogic} tileRef={tileRef} passable={props.passable} black={props.black}>{props.children}</BaseTile>
 }
