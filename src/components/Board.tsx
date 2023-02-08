@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 
 import { SensibleTile, DisplayTile, TileLogic } from "./Tile";
 import { ChessPiece, MovableChessPiece, KnightSVG, FlagSVG } from "./ChessPiece";
-import { Board, ChessPointer, dijkstraSearchIterator, SearchResult } from '@cocacola-lover/knight_path_finder';
+import { Board, ChessPointer, dijkstraSearchIterator, deepFirstSearchIterator, SearchResult } from '@cocacola-lover/knight_path_finder';
 import Mapping2D from '../logic/mapping2d';
 
 
@@ -139,9 +139,9 @@ export function MovableBoard (props : MovableBoardProps) {
             createTile={
                 (passable, pos) => 
                 <SensibleTile 
-                    key={`${pos.y},${pos.x}`} 
+                    key={`${pos.x},${pos.y}`} 
                     onDragEnter={() => {setShadow(pos)}}
-                    black={(pos.y + pos.x) % 2 === 1}
+                    black={(pos.x + pos.y) % 2 === 1}
                     passable={passable}>
 
                     {/* Put knight and flag to their place */}
@@ -215,8 +215,8 @@ export function DrawableBoard (props : DrawableBoardProps) {
             createTile={
                 (square, pos) => {
                     return <SensibleTile
-                    key={`${pos.y},${pos.x}`}
-                    black={(pos.y + pos.x) % 2 === 1}
+                    key={`${pos.x},${pos.y}`}
+                    black={(pos.x + pos.y) % 2 === 1}
                     onMouseDown={createTileHadleOnMouseDown(pos)}
                     onMouseUp={createTileHadleOnMouseUp()}
                     onMouseEnter={createTileHadleOnMouseEnter(pos)}
@@ -226,12 +226,12 @@ export function DrawableBoard (props : DrawableBoardProps) {
 
                     { 
                     Position.same(pos, props.knightPosition) ? 
-                        <ChessPiece child={KnightSVG} black={(pos.y + pos.x) % 2 === 0}/> : null
+                        <ChessPiece child={KnightSVG} black={(pos.x + pos.y) % 2 === 0}/> : null
                     }
 
                     {
                     Position.same(pos, props.flagPosition) ? 
-                    <ChessPiece child={FlagSVG} black={(pos.y + pos.x) % 2 === 0}/> : null
+                    <ChessPiece child={FlagSVG} black={(pos.x + pos.y) % 2 === 0}/> : null
                     }
 
                     </SensibleTile>
@@ -251,49 +251,62 @@ export function DisplayBoard (props : DisplayBoardProps) {
 
     const {width, height} = props;
 
-    const [foundMapping, setFoundMapping] = useState(new Mapping2D<boolean>(height, width, false));
-    const [visitedMapping, setVisitedMapping] = useState(new Mapping2D<boolean>(height, width, false));
+    const [tileLogicMapping, setTileLogicMapping] = useState(new Mapping2D<TileLogic>(height, width, TileLogic.notFound))
 
     const boardRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
 
-        console.log("Display board updating");
-
         const {width, height, knightPosition, flagPosition} = props;
         const board = boardRef.current;
 
-        const logicBoard = new Board(width, height);
+        const logicBoard = new Board(height, width);
+
         const startPosition = new ChessPointer(
-            knightPosition.y, knightPosition.x, logicBoard.squares);
+            knightPosition.x, knightPosition.y, logicBoard.squares);
         const endPosition = new ChessPointer(
-            flagPosition.y, flagPosition.x, logicBoard.squares);
+            flagPosition.x, flagPosition.y, logicBoard.squares);
 
         const ite = dijkstraSearchIterator(startPosition, endPosition);
 
-        const parceFound = () => {
-            const ans = new Mapping2D<boolean>(height, width, false);
+        const addFound = () => setTileLogicMapping ((prevLogic) => {
+            const ans = prevLogic.copy();
 
-            logicBoard.squares.forEach((row, index1) => {
-                row.forEach((value, index2) => {
-                    ans.setAt(new Position(index1, index2), value.distanceFromStart !== undefined);
-                })
+            logicBoard.squares.forEach( (row, index1) => row.forEach((value, index2) => {
+                const currentPosition = new Position(index1, index2);
+
+                if (ans.at(currentPosition) === TileLogic.notFound) {
+                    ans.setAt(
+                        currentPosition, 
+                        value.distanceFromStart !== undefined ? TileLogic.found : TileLogic.notFound
+                    );}
+                }));
+
+            return ans;
             });
 
-            setFoundMapping(ans);
-        };
-
-        const addVisited = (newVisited : ChessPointer) => {
-
-            setVisitedMapping((prevMapping) => {
+        const addVisited = (newVisited : ChessPointer) => setTileLogicMapping((prevMapping) => {
                 const ans = prevMapping.copy();
 
-                ans.setAt( new Position(newVisited.y, newVisited.x), true);
+                ans.setAt( new Position(newVisited.x, newVisited.y), TileLogic.visited);
                 return ans;
-
             });
 
-        }
+        const addRoad = () => setTileLogicMapping((prevMapping) => {
+            const ans = prevMapping.copy();
+
+            let chessPointer : ChessPointer | undefined = endPosition;
+
+            while (chessPointer !== undefined) {
+
+                ans.setAt(new Position(chessPointer.x, chessPointer.y), TileLogic.road);
+
+                chessPointer = chessPointer.at().shortestPath;
+
+            }
+
+            return ans;
+        });
 
         const iterateDisplay = () => {
             
@@ -304,7 +317,9 @@ export function DisplayBoard (props : DisplayBoardProps) {
             
             if (ans.result === SearchResult.SearchContinues) {
                 addVisited(ans.to as ChessPointer);
-                parceFound();
+                addFound();
+            } else if (ans.result === SearchResult.TargetFound) {
+                addRoad();
             }
             
         }
@@ -319,26 +334,22 @@ export function DisplayBoard (props : DisplayBoardProps) {
             createTile={
                 (passable, pos) => {
 
-                    let tileLogic = TileLogic.notFound;
-                    if (foundMapping.at(pos)) tileLogic = TileLogic.found;
-                    if (visitedMapping.at(pos)) tileLogic = TileLogic.visited;
-
                     return <DisplayTile
-                    key={`${pos.y},${pos.x}`}
-                    black={(pos.y + pos.x) % 2 === 1}
+                    key={`${pos.x},${pos.y}`}
+                    black={(pos.x + pos.y) % 2 === 1}
                     passable={passable}
-                    tileLogic={tileLogic}>
+                    tileLogic={tileLogicMapping.at(pos)}>
 
                     {/* Put knight and flag to their place */}
 
                     { 
                     Position.same(pos, props.knightPosition) ? 
-                        <ChessPiece child={KnightSVG} black={(pos.y + pos.x) % 2 === 0}/> : null
+                        <ChessPiece child={KnightSVG} black={(pos.x + pos.y) % 2 === 0}/> : null
                     }
 
                     {
                     Position.same(pos, props.flagPosition) ? 
-                    <ChessPiece child={FlagSVG} black={(pos.y + pos.x) % 2 === 0}/> : null
+                    <ChessPiece child={FlagSVG} black={(pos.x + pos.y) % 2 === 0}/> : null
                     }
 
                     </DisplayTile>
