@@ -55,7 +55,8 @@ export function SensibleTile (props : SensibleTileProps) {
 export enum TileLogic {
     notFound,
     found,
-    visited
+    visited,
+    road
 }
 
 interface DisplayTileProps {
@@ -79,6 +80,9 @@ export function DisplayTile (props : DisplayTileProps) {
             break;
         case TileLogic.visited : 
             tileLogic = 'visited';
+            break;
+        case TileLogic.road : 
+            tileLogic='road';
             break;
     }
 
