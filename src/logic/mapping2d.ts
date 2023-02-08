@@ -5,22 +5,22 @@ export default class Mapping2D<Type> {
 
     constructor(height : number, width : number, defaultVal : Type) {
         this.arr = [];
-        for (let i = 0; i < height; i++){
+        for (let i = 0; i < width; i++){
             this.arr.push([]);
-            for (let j = 0; j < width; j++) this.arr[i].push(defaultVal);
+            for (let j = 0; j < height; j++) this.arr[i].push(defaultVal);
         }
     }
 
     at (position : Position) {
-        return this.arr[position.y][position.x];
+        return this.arr[position.x][position.y];
     }
 
     setAt (position : Position, value : Type) {
-        this.arr[position.y][position.x] = value;
+        this.arr[position.x][position.y] = value;
     }
 
     copy () {
-        const ans = new Mapping2D<Type>(this.arr.length, this.arr[0].length, this.arr[0][0]);
+        const ans = new Mapping2D<Type>(this.arr[0].length, this.arr.length, this.arr[0][0]);
 
         ans.arr = ans.arr.map((row, index1) => row.map((curentVal, index2) => {
             return this.arr[index1][index2];
