@@ -2,13 +2,16 @@ import { useState, useEffect, useRef } from "react";
 
 import { SensibleTile, DisplayTile, TileLogic } from "./Tile";
 import { ChessPiece, MovableChessPiece, KnightSVG, FlagSVG } from "./ChessPiece";
-import { Board, ChessPointer, dijkstraSearchIterator, deepFirstSearchIterator, SearchResult } from '@cocacola-lover/knight_path_finder';
+
+import { Board, ChessPointers, PathFindingIterators, SearchResult } from '@cocacola-lover/knight_path_finder';
+
 import Mapping2D from '../logic/mapping2d';
-
-
 import Position from "../logic/position";
 
 import './css/Board.css';
+
+import iterator = PathFindingIterators.deepFirstSearchIterator;
+const createPointer = 'createBasicPointer';
 
 const size = 600;
 
@@ -262,12 +265,10 @@ export function DisplayBoard (props : DisplayBoardProps) {
 
         const logicBoard = new Board(height, width);
 
-        const startPosition = new ChessPointer(
-            knightPosition.x, knightPosition.y, logicBoard.squares);
-        const endPosition = new ChessPointer(
-            flagPosition.x, flagPosition.y, logicBoard.squares);
+        const startPosition = logicBoard[createPointer](knightPosition.x, knightPosition.y);
+        const endPosition = logicBoard[createPointer](flagPosition.x, flagPosition.y);
 
-        const ite = dijkstraSearchIterator(startPosition, endPosition);
+        const ite = iterator(startPosition, endPosition);
 
         const addFound = () => setTileLogicMapping ((prevLogic) => {
             const ans = prevLogic.copy();
@@ -285,7 +286,7 @@ export function DisplayBoard (props : DisplayBoardProps) {
             return ans;
             });
 
-        const addVisited = (newVisited : ChessPointer) => setTileLogicMapping((prevMapping) => {
+        const addVisited = (newVisited : ChessPointers.BasicPointer) => setTileLogicMapping((prevMapping) => {
                 const ans = prevMapping.copy();
 
                 ans.setAt( new Position(newVisited.x, newVisited.y), TileLogic.visited);
@@ -295,7 +296,7 @@ export function DisplayBoard (props : DisplayBoardProps) {
         const addRoad = () => setTileLogicMapping((prevMapping) => {
             const ans = prevMapping.copy();
 
-            let chessPointer : ChessPointer | undefined = endPosition;
+            let chessPointer : ChessPointers.BasicPointer | undefined = endPosition;
 
             while (chessPointer !== undefined) {
 
@@ -311,12 +312,9 @@ export function DisplayBoard (props : DisplayBoardProps) {
         const iterateDisplay = () => {
             
             const ans = ite();
-
-            console.log("iterate", ans)
-            console.log(startPosition, endPosition);
             
             if (ans.result === SearchResult.SearchContinues) {
-                addVisited(ans.to as ChessPointer);
+                addVisited(ans.to as ChessPointers.BasicPointer);
                 addFound();
             } else if (ans.result === SearchResult.TargetFound) {
                 addRoad();
