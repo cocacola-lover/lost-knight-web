@@ -1,16 +1,12 @@
 import './css/Tile.css';
+
 import { useEffect, useRef } from 'react';
+import { TileInterfaces } from '../logic/interfaces';
 
-interface BaseTileProps {
-    black? : boolean
-    children? : any
-    tileRef? : React.RefObject<HTMLDivElement>
-    passable? : boolean
-    additionalClassName? : string
-}
+import TileLogic = TileInterfaces.TileLogic;
 
 
-function BaseTile (props : BaseTileProps) {
+function BaseTile (props : TileInterfaces.BaseTileProps) {
 
     const color = props.black ? 'black' : 'white';
     const passable = props.passable === false ? 'unpassable' : 'passable';
@@ -20,17 +16,7 @@ function BaseTile (props : BaseTileProps) {
     </div>
 }
 
-interface SensibleTileProps {
-    onDragEnter? : (event : DragEvent) => void
-    onMouseDown? : (event : Event) => void
-    onMouseEnter? : (event : Event) => void
-    onMouseUp? : (event : Event) => void
-    black? : boolean
-    passable? : boolean
-    children? : any
-}
-
-export function SensibleTile (props : SensibleTileProps) {
+export function SensibleTile (props : TileInterfaces.SensibleTileProps) {
     const tileRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -52,21 +38,7 @@ export function SensibleTile (props : SensibleTileProps) {
     return <BaseTile tileRef={tileRef} passable={props.passable} black={props.black}>{props.children}</BaseTile>
 }
 
-export enum TileLogic {
-    notFound,
-    found,
-    visited,
-    road
-}
-
-interface DisplayTileProps {
-    black? : boolean
-    passable? : boolean
-    children? : any
-    tileLogic? : TileLogic
-}
-
-export function DisplayTile (props : DisplayTileProps) {
+export function DisplayTile (props : TileInterfaces.DisplayTileProps) {
     const tileRef = useRef<HTMLDivElement>(null);
 
     let tileLogic : string;
