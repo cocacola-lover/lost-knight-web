@@ -123,3 +123,28 @@ export namespace ChessPieceInterface {
     }
 
 }
+
+export namespace ArrowScopeInterface {
+
+    export interface Line {
+        from : Position
+        to : Position
+    }
+
+    export interface ArrowProps {
+        direction : Line
+
+        stickWidth : number;
+        arrowWidth : number;
+        arrowHeight : number;
+    }
+
+
+    export interface ArrowScopeProps {
+        height : number,
+        width : number,
+        children : JSX.Element
+        arrows : Line[],
+        scopeRef : React.RefObject<HTMLDivElement>
+    }
+}

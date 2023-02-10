@@ -1,0 +1,18 @@
+.Arrow {
+    position: absolute;
+    transform-origin : 50% 0%;
+}
+
+.Stick {
+    background-color: rgba(255, 165, 0, 0.7);
+}
+
+.ArrowHead {
+    width: 0px;
+    height: 0px;
+    
+}
+
+.ArrowScope {
+    position: relative;
+}

@@ -1,11 +1,12 @@
 import './css/Board.css';
 import { useState, useEffect, useRef } from "react";
-import { BoardInterfaces, TileInterfaces, ChessPieceInterface } from "../logic/interfaces";
+import { BoardInterfaces, TileInterfaces, ChessPieceInterface, ArrowScopeInterface } from "../logic/interfaces";
 import TileLogic = TileInterfaces.TileLogic;
 
 // Components
 import { SensibleTile, DisplayTile } from "./Tile";
 import { ChessPiece, MovableChessPiece } from "./ChessPiece";
+import ArrowScope from './ArrowScope';
 
 // Logic
 import Mapping2D from '../logic/mapping2d';
@@ -16,7 +17,7 @@ import { Board, ChessPointers, PathFindingIterators, SearchResult } from '@cocac
 
 
 import iterator = PathFindingIterators.dijkstraSearchIterator;
-const createPointer = 'createBasicPointer';
+const createPointer = 'createKnightPointer';
 
 const size = 600;
 
@@ -216,13 +217,16 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
     const {width, height} = props;
 
     const [tileLogicMapping, setTileLogicMapping] = useState(new Mapping2D<TileLogic>(height, width, TileLogic.notFound))
+    const [arrows, setArrows] = useState<ArrowScopeInterface.Line[]>([]);
 
     const boardRef = useRef<HTMLDivElement>(null);
+    const scopeRef = useRef<HTMLDivElement>(null);
+
 
     useEffect(() => {
 
         const {width, height, knightPosition, flagPosition} = props;
-        const board = boardRef.current;
+        const scope = scopeRef.current;
 
         const logicBoard = new Board(height, width);
 
@@ -270,15 +274,43 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
                 return ans;
             });
             
+            const drawArrowForVisited = (from : ChessPointers.BasicPointer | undefined, to : ChessPointers.BasicPointer | undefined) => {
+                if (from !== undefined && to !== undefined) {
+                    setArrows([
+                        {from : new Position(from.x, from.y), to : new Position(to.x, to.y)}
+                    ])
+                }
+            }
+
+            const drawArrowRoad = () => {
+                let pos : ChessPointers.BasicPointer = endPosition;
+                const roadArrows = [];
+
+                while (pos.at().shortestPath !== undefined) {
+                    roadArrows.push(
+                        {
+                            to : new Position(pos.x, pos.y), 
+                            from : new Position(pos.at().shortestPath!.x, pos.at().shortestPath!.y)
+                        }
+                    )
+                    if (pos.at().shortestPath === undefined) break;
+                    else pos = pos.at().shortestPath as ChessPointers.BasicPointer;
+                }
+                setArrows(roadArrows);
+            }
+
+
             const ans = ite();
 
             switch (ans.result) {
                 case SearchResult.SearchContinues :
                     addVisited(ans.to as ChessPointers.BasicPointer);
                     addFound();
+                    drawArrowForVisited(ans.from, ans.to)
                     break;
                 case SearchResult.TargetFound : 
                     addRoad();
+                    drawArrowRoad();
                     break;
                 case SearchResult.TargetNotFound : 
                     break
@@ -286,12 +318,13 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
             
         }
 
-        board?.addEventListener('click', iterateDisplay);
+        scope?.addEventListener('click', iterateDisplay);
 
-        return () => board?.removeEventListener('click', iterateDisplay);
+        return () => scope?.removeEventListener('click', iterateDisplay);
     }, [props])
     
-    return <BaseBoard boardRef={boardRef}
+    return <ArrowScope scopeRef={scopeRef} height={props.height} width={props.width} arrows={arrows}>
+        <BaseBoard boardRef={boardRef}
             height={props.height} width={props.width} getPassability={props.getPassability} knightPosition={props.knightPosition} flagPosition={props.flagPosition}
             createTile={
                 (passable, pos, child) => 
@@ -304,4 +337,5 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
                 </DisplayTile>
             }
             createPiece={(pos, child) => <ChessPiece child={child} black={(pos.x + pos.y) % 2 === 0}/>}/>
+        </ArrowScope>
 }
