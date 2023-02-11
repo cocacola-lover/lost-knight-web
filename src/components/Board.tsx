@@ -34,19 +34,12 @@ function BaseBoard (props : BoardInterfaces.BaseBoardProps) {
             for (let j = 0; j < props.width; j++) {
 
                 const position = new Position(j, i);
-                let child : JSX.Element | undefined = undefined;
-
-                if (Position.same(props.knightPosition, position)) 
-                    child = props.createPiece(position, ChessPieceInterface.KnightSVG);
-
-                if (Position.same(props.flagPosition, position)) 
-                    child = props.createPiece(position, ChessPieceInterface.FlagSVG);
 
                 ans[i].push(
                     props.createTile(
                         props.getPassability(position), 
                         position,
-                        child
+                        props.createPiece(position)
                         )
                 );
             }
@@ -150,9 +143,10 @@ export function MovableBoard (props : BoardInterfaces.MovableBoardProps) {
                     {child}
                 </SensibleTile>                
             }
-            createPiece={(pos, child) => {
-                if (Position.same(pos, knightPosition)) return MovablePiece(setKnightMoving, pos.x + pos.y, child)
-                else return MovablePiece(setFlagMoving, pos.x + pos.y, child)
+            createPiece={(pos) => {
+                if (Position.same(pos, knightPosition)) return MovablePiece(setKnightMoving, pos.x + pos.y, ChessPieceInterface.KnightSVG)
+                else if (Position.same(pos, flagPosition))  return MovablePiece(setFlagMoving, pos.x + pos.y, ChessPieceInterface.FlagSVG)
+                else return undefined;
             }}/>
 }
 
@@ -207,8 +201,10 @@ export function DrawableBoard (props : BoardInterfaces.DrawableBoardProps) {
                     {child}
                 </SensibleTile>
             }
-            createPiece={(pos, child) => {
-                return <ChessPiece child={child} black={(pos.x + pos.y) % 2 === 0}/>
+            createPiece={(pos) => {
+                if (Position.same(pos, props.knightPosition)) return <ChessPiece child={ChessPieceInterface.KnightSVG} black={(pos.x + pos.y) % 2 === 0}/>
+                else if (Position.same(pos, props.flagPosition)) return <ChessPiece child={ChessPieceInterface.FlagSVG} black={(pos.x + pos.y) % 2 === 0}/>
+                else return undefined;
             }}/>
 }
 
@@ -218,6 +214,7 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
 
     const [tileLogicMapping, setTileLogicMapping] = useState(new Mapping2D<TileLogic>(height, width, TileLogic.notFound))
     const [arrows, setArrows] = useState<ArrowScopeInterface.Line[]>([]);
+    const [shadows, setShadows] = useState<Position[]>([]);
 
     const boardRef = useRef<HTMLDivElement>(null);
     const scopeRef = useRef<HTMLDivElement>(null);
@@ -279,12 +276,14 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
                     setArrows([
                         {from : new Position(from.x, from.y), to : new Position(to.x, to.y)}
                     ])
+                    setShadows([new Position(from.x, from.y)]);
                 }
             }
 
             const drawArrowRoad = () => {
                 let pos : ChessPointers.BasicPointer = endPosition;
                 const roadArrows = [];
+                const roadShadows = []
 
                 while (pos.at().shortestPath !== undefined) {
                     roadArrows.push(
@@ -294,9 +293,13 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
                         }
                     )
                     if (pos.at().shortestPath === undefined) break;
-                    else pos = pos.at().shortestPath as ChessPointers.BasicPointer;
+                    else {
+                        pos = pos.at().shortestPath as ChessPointers.BasicPointer;
+                        roadShadows.push(new Position(pos.x, pos.y));
+                    }
                 }
                 setArrows(roadArrows);
+                setShadows(roadShadows);
             }
 
 
@@ -336,6 +339,13 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
                     {child}
                 </DisplayTile>
             }
-            createPiece={(pos, child) => <ChessPiece child={child} black={(pos.x + pos.y) % 2 === 0}/>}/>
+            createPiece={(pos) => {
+                if (Position.same(pos, props.knightPosition)) return <ChessPiece child={ChessPieceInterface.KnightSVG} black={(pos.x + pos.y) % 2 === 0}/>
+                if (Position.same(pos, props.flagPosition)) return <ChessPiece child={ChessPieceInterface.FlagSVG} black={(pos.x + pos.y) % 2 === 0}/>
+                for (let i = 0; i < shadows.length; i++) {
+                    if (Position.same(pos, shadows[i])) return <ChessPiece 
+                    child={(color : string) => ChessPieceInterface.KnightSVG(color, 0.5)} 
+                    black={(props.knightPosition.x + props.knightPosition.y) % 2 === 0}/>
+                }}}/>
         </ArrowScope>
 }
