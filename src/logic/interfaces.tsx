@@ -148,3 +148,20 @@ export namespace ArrowScopeInterface {
         scopeRef : React.RefObject<HTMLDivElement>
     }
 }
+
+export namespace SettingsManagerInterface {
+
+    export interface StatePair<Type> {
+        get : Type,
+        set : React.Dispatch<React.SetStateAction<Type>>
+    }
+
+    export interface SliderProps {
+        value : StatePair<number>
+    }
+
+    export interface SettingsManagerProps {
+        height : StatePair<number>,
+        width : StatePair<number>
+    }
+}
