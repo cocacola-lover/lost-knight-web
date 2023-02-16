@@ -265,11 +265,16 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
 
 
     useEffect(() => {
+        setTileLogicMapping(new Mapping2D<TileLogic>(props.height, props.width, TileLogic.notFound))
+        setArrows([]);
+        setShadows([]);
 
         const {width, height, knightPosition, flagPosition} = props;
         const scope = scopeRef.current;
 
         const logicBoard = new Board(height, width);
+        logicBoard.forEach((value, index1, index2) => 
+            logicBoard.setPassability(props.passabilityMap.arr) )
 
         const startPosition = logicBoard[createPointer](knightPosition.x, knightPosition.y);
         const endPosition = logicBoard[createPointer](flagPosition.x, flagPosition.y);
