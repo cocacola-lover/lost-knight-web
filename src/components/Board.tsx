@@ -106,9 +106,10 @@ export function MovableBoard (props : BoardInterfaces.MovableBoardProps) {
                 mousePosition.x - sizes.position.x,
                 mousePosition.y - sizes.position.y
             );
+            
             if (position.x < 0 || position.y < 0 
-                || position.x > (sizes.position.x + sizes.width) 
-                    || position.y > (sizes.position.y + sizes.height)) return undefined;
+                || position.x > (sizes.width) 
+                    || position.y > (sizes.height)) return undefined;
     
             const stepUp = sizes.height / props.height;
             const stepRight = sizes.width / props.width;
