@@ -1,6 +1,7 @@
 import './css/Board.css';
 import { useState, useEffect, useRef } from "react";
-import { BoardInterfaces, TileInterfaces, ChessPieceInterface, ArrowScopeInterface } from "../logic/interfaces";
+import useHTMLElementSizes from '../logic/useHTMLElementSizes';
+import { HTMLElementSizes, BoardInterfaces, TileInterfaces, ChessPieceInterface, ArrowScopeInterface } from "../logic/interfaces";
 import TileLogic = TileInterfaces.TileLogic;
 
 // Components
@@ -60,12 +61,24 @@ function BaseBoard (props : BoardInterfaces.BaseBoardProps) {
             board?.removeEventListener("dragstart", preventDragOrAnimation);
             board?.removeEventListener("dragover", preventDragOrAnimation);
         }
-    })
+    });
+
+    let width: number, height : number;
+    if (props.height > props.width) {
+        height = size;
+        width = size * props.width / props.height;
+    } else {
+        width = size;
+        height = size * props.height / props.width;
+    }
 
     return (
         <div className="Board" 
              ref={props.boardRef} 
-             style={{gridTemplate : `repeat(${props.height}, 1fr) / repeat(${props.width}, 1fr)`, width : `${size}px`, height : `${size * props.height / props.width}px`}}>
+             style={{
+                gridTemplate : `repeat(${props.height}, 1fr) / repeat(${props.width}, 1fr)`, 
+                width : `${width}px`, 
+                height : `${height}px`}}>
                 {createBoard()}
         </div>
     )
@@ -75,55 +88,81 @@ function BaseBoard (props : BoardInterfaces.BaseBoardProps) {
 
 export function MovableBoard (props : BoardInterfaces.MovableBoardProps) {
 
-    const {flagPosition, knightPosition, setFlagPosition, setKnightPosition} = props;
-    const [shadow, setShadow] = useState<Position>(new Position(0, 0));
-    const [dragBalance, setDragBalance] = useState<number>(0);
-
+    const {flagPosition, knightPosition} = props;
+    
     const [isKnightMoving, setKnightMoving] = useState<boolean>(false);
     const [isFlagMoving, setFlagMoving] = useState<boolean>(false);
-
     
     const boardRef = useRef<HTMLDivElement>(null);
+    const sizes = useHTMLElementSizes(boardRef);
 
-    // Watching for DragBalance
-    useEffect( () => {
-        const board = boardRef.current;
-        const balanceUp = () => setDragBalance(prev => prev+1);
-        const balanceDown = () => setDragBalance(prev => prev-1);
+    
 
-        board?.addEventListener("dragenter", balanceUp);
-        board?.addEventListener("dragleave", balanceDown);
-
-        return () => {
-            board?.removeEventListener("dragenter", balanceUp);
-            board?.removeEventListener("dragleave", balanceDown);
-        }
-    }, [dragBalance])
-
-    //Following the Shadow
+    // Handle onMouseUp on board
     useEffect(() => {
-        const board = boardRef.current;
+        const calculatePositionOnBoard = (sizes : HTMLElementSizes, mousePosition : Position) => {
 
-        const resultOfDrag = () => {
-            if (isKnightMoving) {
-                if (dragBalance === 1 && !Position.same(flagPosition, shadow)) setKnightPosition(shadow.copy());
+            const position = new Position(
+                mousePosition.x - sizes.position.x,
+                mousePosition.y - sizes.position.y
+            );
+            if (position.x < 0 || position.y < 0 
+                || position.x > (sizes.position.x + sizes.width) 
+                    || position.y > (sizes.position.y + sizes.height)) return undefined;
+    
+            const stepUp = sizes.height / props.height;
+            const stepRight = sizes.width / props.width;
+    
+            let i = 0, j = 0;
+            while (position.x > stepRight) {
+                position.x -= stepRight;
+                i++;
             }
-            if (isFlagMoving) {
-                if (dragBalance === 1 && !Position.same(knightPosition, shadow)) setFlagPosition(shadow.copy());
+            while (position.y > stepUp) {
+                position.y -= stepUp;
+                j++;
             }
-            setKnightMoving(false); setFlagMoving(false);
-            setDragBalance(0);
+            return new Position(i, j);
         }
 
-        board?.addEventListener("dragend", resultOfDrag);
-        return () => board?.removeEventListener("dragend", resultOfDrag);
-    })
+        const {setFlagPosition, setKnightPosition} = props;
 
-    // Creating My ChessPieces
+        if (isFlagMoving) {
+
+            const handleOnMouseUp = (event : Event) => {
+                setFlagMoving(false);
+                const newPosition = calculatePositionOnBoard(sizes, new Position(
+                    (event as MouseEvent).clientX,
+                    (event as MouseEvent).clientY
+                ));
+                if (newPosition !== undefined) setFlagPosition(newPosition);
+            }
+
+            document.addEventListener('pointerup', handleOnMouseUp);
+            return () => document.removeEventListener('pointerup', handleOnMouseUp);
+        };
+
+        if (isKnightMoving) {
+
+            const handleOnMouseUp = (event : Event) => {
+                setKnightMoving(false);
+                const newPosition = calculatePositionOnBoard(sizes, new Position(
+                    (event as MouseEvent).clientX,
+                    (event as MouseEvent).clientY
+                ));
+                if (newPosition !== undefined) setKnightPosition(newPosition);
+            }
+
+            document.addEventListener('pointerup', handleOnMouseUp);
+            return () => document.removeEventListener('pointerup', handleOnMouseUp);
+        }
+        
+    }, [props, sizes, isFlagMoving, isKnightMoving]);
+
+
     const MovablePiece = (setMoving : (value: React.SetStateAction<boolean>) => void, sum : number, child :  (color: string) => JSX.Element) => {
         return <MovableChessPiece 
-        onDragStart={(event : DragEvent) => {
-            event.stopPropagation();
+        onDragStart={(event : Event) => {
             setMoving(true)
         }}
         child={child}
@@ -131,13 +170,14 @@ export function MovableBoard (props : BoardInterfaces.MovableBoardProps) {
         ></MovableChessPiece>
     }
 
-    return <BaseBoard boardRef={boardRef} 
+    return (
+        <div>
+            <BaseBoard boardRef={boardRef} 
             height={props.height} width={props.width} getPassability={props.getPassability} knightPosition={props.knightPosition} flagPosition={props.flagPosition}
             createTile={
                 (passable, pos, child) => 
                 <SensibleTile 
                     key={`${pos.x},${pos.y}`} 
-                    onDragEnter={() => {setShadow(pos)}}
                     black={(pos.x + pos.y) % 2 === 1}
                     passable={passable}>
                     {child}
@@ -148,7 +188,10 @@ export function MovableBoard (props : BoardInterfaces.MovableBoardProps) {
                 else if (Position.same(pos, flagPosition))  return MovablePiece(setFlagMoving, pos.x + pos.y, ChessPieceInterface.FlagSVG)
                 else return undefined;
             }}/>
+        </div>
+            )
 }
+
 
 export function DrawableBoard (props : BoardInterfaces.DrawableBoardProps) {
 
