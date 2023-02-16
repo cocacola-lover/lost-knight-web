@@ -100,18 +100,21 @@ export namespace ChessPieceInterface {
     export interface ChessPieceProps {
         black? : boolean
         dragabble? : boolean
+        
+        additionalClassName? : string
+        style? : React.CSSProperties
 
         chessPieceRef? : React.RefObject<HTMLDivElement>
 
-        child : (color: string) => JSX.Element
+        child : (color: string, opacity?: number) => JSX.Element
     }
 
     export interface MovableChessPieceProps {
         black? : boolean
 
-        onDragStart :  (event : DragEvent) => void
+        onDragStart :  (event : Event) => void
 
-        child : (color: string) => JSX.Element
+        child : (color: string, opacity?: number) => JSX.Element
     }
 
     export function FlagSVG(color : string, opacity? : number) {
@@ -164,4 +167,10 @@ export namespace SettingsManagerInterface {
         height : StatePair<number>,
         width : StatePair<number>
     }
+}
+
+export interface HTMLElementSizes {
+    width : number,
+    height : number,
+    position : Position
 }
