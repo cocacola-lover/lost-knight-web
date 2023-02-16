@@ -18,9 +18,18 @@ function Slider (props : SettingsManagerInterface.SliderProps) {
             </div>
 }
 
+function Button (props : SettingsManagerInterface.ButtonProps) {
+    return <button className={`${props.className} ${props.state.get ? 'active' : 'inactive'}`}
+            onClick={props.state.toggle}>
+                {props.className}
+            </button>
+}
+
 export default function SettingManager (props : SettingsManagerInterface.SettingsManagerProps) {
 
     return (<div className='SettingManager'>
+                <Button className='Iterate' state={props.iterate}></Button>
+                <Button className='Draw' state={props.draw}></Button>
                 <Slider value={props.height}/>
                 <Slider value={props.width}/>
             </div>)
