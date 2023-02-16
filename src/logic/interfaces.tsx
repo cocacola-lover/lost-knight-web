@@ -1,4 +1,13 @@
+import Mapping2D from "./mapping2d";
 import Position from "./position";
+
+export namespace AppInterfaces {
+    export enum BoardState {
+        Display,
+        Drawable,
+        Movable
+    }
+}
 
 export namespace BoardInterfaces {
 
@@ -49,6 +58,7 @@ export namespace BoardInterfaces {
         flagPosition : Position
 
         getPassability : (position : Position) => boolean
+        passabilityMap : Mapping2D<boolean>
     }
 
 }
@@ -159,13 +169,26 @@ export namespace SettingsManagerInterface {
         set : React.Dispatch<React.SetStateAction<Type>>
     }
 
+    export interface TogglePair<Type> {
+        get : Type,
+        toggle : () => void
+    }
+
     export interface SliderProps {
         value : StatePair<number>
+    }
+
+    export interface ButtonProps {
+        state : TogglePair<boolean>
+        className? : string
     }
 
     export interface SettingsManagerProps {
         height : StatePair<number>,
         width : StatePair<number>
+
+        iterate : TogglePair<boolean>
+        draw : TogglePair<boolean>
     }
 }
 
