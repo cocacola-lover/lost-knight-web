@@ -1,5 +1,5 @@
 import './css/Board.css';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import useHTMLElementSizes from '../logic/useHTMLElementSizes';
 import { HTMLElementSizes, BoardInterfaces, TileInterfaces, ChessPieceInterface, ArrowScopeInterface } from "../logic/interfaces";
 import TileLogic = TileInterfaces.TileLogic;
@@ -264,38 +264,80 @@ export function DrawableBoard (props : BoardInterfaces.DrawableBoardProps) {
 
 export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
 
+    interface IteResult {
+        result: SearchResult;
+        from?: ChessPointers.BasicPointer | undefined;
+        to?: ChessPointers.BasicPointer | undefined;
+    }
+
     const {width, height} = props;
 
     const [tileLogicMapping, setTileLogicMapping] = useState(new Mapping2D<TileLogic>(height, width, TileLogic.notFound))
+
+    const iterationBoard = useMemo(() => {
+
+        const logicBoard = new Board(props.height, props.width);
+        logicBoard.setPassability(props.passabilityMap.arr);
+
+        return logicBoard;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [props.height, props.width, props.passabilityMap, props.algorithm]);
+
+    const iterate = useMemo(() => {
+        const startPosition = iterationBoard[createPointer](props.knightPosition.x, props.knightPosition.y);
+        const endPosition = iterationBoard[createPointer](props.flagPosition.x, props.flagPosition.y);
+
+        return PathFindingIterators[convertAlgoId(props.algorithm)](startPosition, endPosition);
+    }, [props.flagPosition, props.knightPosition, props.algorithm, iterationBoard])
+
+    const [searchResult, setSearchResult] = useState<IteResult>();
+
     const [arrows, setArrows] = useState<ArrowScopeInterface.Line[]>([]);
     const [shadows, setShadows] = useState<Position[]>([]);
 
     const boardRef = useRef<HTMLDivElement>(null);
     const scopeRef = useRef<HTMLDivElement>(null);
 
-
+    // Iterate on press and/or on interval
     useEffect(() => {
-        setTileLogicMapping(new Mapping2D<TileLogic>(props.height, props.width, TileLogic.notFound))
-        setArrows([]);
-        setShadows([]);
-
-        const {width, height, knightPosition, flagPosition} = props;
+        if (searchResult !== undefined && searchResult.result !== SearchResult.SearchContinues) return;
         const scope = scopeRef.current;
 
-        const logicBoard = new Board(height, width);
-        logicBoard.setPassability(props.passabilityMap.arr);
+        const ite = () => {
+            setSearchResult(iterate());
+        }
 
-        const startPosition = logicBoard[createPointer](knightPosition.x, knightPosition.y);
-        const endPosition = logicBoard[createPointer](flagPosition.x, flagPosition.y);
+        scope?.addEventListener('click', ite);
+        const id = setTimeout(ite, 200);
 
-        const ite = PathFindingIterators[convertAlgoId(props.algorithm)](startPosition, endPosition);
+        return () => {
+            scope?.removeEventListener('click', ite);
+            clearTimeout(id);
+        }
+    }, [iterate, searchResult]);
 
-        const iterateDisplay = () => {
+    // Display Changes
+    useEffect(() => {
+        if (searchResult === undefined) return;
 
-            const addFound = () => setTileLogicMapping ((prevLogic) => {
+        const {from, to, result} = searchResult;
+
+        if (result === SearchResult.SearchContinues) {
+
+            // Color just visited square
+            setTileLogicMapping((prevMapping) => {
+                const ans = prevMapping.copy();
+                const newlyVisited = (to as ChessPointers.BasicPointer);
+
+                ans.setAt( new Position(newlyVisited.x, newlyVisited.y), TileLogic.visited);
+                return ans;
+            });
+
+            // Color squares that were just found
+            setTileLogicMapping ((prevLogic) => {
                 const ans = prevLogic.copy();
     
-                logicBoard.forEach((square, x, y) => {
+                iterationBoard.forEach((square, x, y) => {
                     const currentPosition = new Position(x, y);
     
                     if (ans.at(currentPosition) === TileLogic.notFound 
@@ -304,19 +346,25 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
                 });
     
                 return ans;
-                });
-    
-            const addVisited = (newVisited : ChessPointers.BasicPointer) => setTileLogicMapping((prevMapping) => {
-                    const ans = prevMapping.copy();
-    
-                    ans.setAt( new Position(newVisited.x, newVisited.y), TileLogic.visited);
-                    return ans;
-                });
-    
-            const addRoad = () => setTileLogicMapping((prevMapping) => {
+            });
+
+            // Draw Arrow and Shadow to the square that was just visited
+            if (from !== undefined && to !== undefined) {
+                setArrows([
+                    {from : new Position(from.x, from.y), to : new Position(to.x, to.y)}
+                ])
+                setShadows([new Position(from.x, from.y)]);
+            }
+
+        }
+        else if (result === SearchResult.TargetFound) {
+
+            // Color squares in Path from flag to the knight
+            setTileLogicMapping((prevMapping) => {
                 const ans = prevMapping.copy();
     
-                let chessPointer : ChessPointers.BasicPointer | undefined = endPosition;
+                let chessPointer : ChessPointers.BasicPointer | undefined = 
+                    iterationBoard[createPointer](props.flagPosition.x, props.flagPosition.y);
     
                 while (chessPointer !== undefined) {
     
@@ -328,60 +376,41 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
     
                 return ans;
             });
-            
-            const drawArrowForVisited = (from : ChessPointers.BasicPointer | undefined, to : ChessPointers.BasicPointer | undefined) => {
-                if (from !== undefined && to !== undefined) {
-                    setArrows([
-                        {from : new Position(from.x, from.y), to : new Position(to.x, to.y)}
-                    ])
-                    setShadows([new Position(from.x, from.y)]);
-                }
-            }
 
-            const drawArrowRoad = () => {
-                let pos : ChessPointers.BasicPointer = endPosition;
-                const roadArrows = [];
-                const roadShadows = []
+            // Draw Shadows and arrows for path
+            let pos : ChessPointers.BasicPointer = 
+                iterationBoard[createPointer](props.flagPosition.x, props.flagPosition.y);
+            const roadArrows = [];
+            const roadShadows = []
 
-                while (pos.at().shortestPath !== undefined) {
-                    roadArrows.push(
-                        {
-                            to : new Position(pos.x, pos.y), 
-                            from : new Position(pos.at().shortestPath!.x, pos.at().shortestPath!.y)
-                        }
-                    )
-                    if (pos.at().shortestPath === undefined) break;
-                    else {
-                        pos = pos.at().shortestPath as ChessPointers.BasicPointer;
-                        roadShadows.push(new Position(pos.x, pos.y));
+            while (pos.at().shortestPath !== undefined) {
+                roadArrows.push(
+                    {
+                        to : new Position(pos.x, pos.y), 
+                        from : new Position(pos.at().shortestPath!.x, pos.at().shortestPath!.y)
                     }
+                )
+                if (pos.at().shortestPath === undefined) break;
+                else {
+                    pos = pos.at().shortestPath as ChessPointers.BasicPointer;
+                    roadShadows.push(new Position(pos.x, pos.y));
                 }
-                setArrows(roadArrows);
-                setShadows(roadShadows);
             }
+            setArrows(roadArrows);
+            setShadows(roadShadows);
+        } 
+        else {
 
-
-            const ans = ite();
-
-            switch (ans.result) {
-                case SearchResult.SearchContinues :
-                    addVisited(ans.to as ChessPointers.BasicPointer);
-                    addFound();
-                    drawArrowForVisited(ans.from, ans.to)
-                    break;
-                case SearchResult.TargetFound : 
-                    addRoad();
-                    drawArrowRoad();
-                    break;
-                case SearchResult.TargetNotFound : 
-                    break
-            }
-            
         }
 
-        scope?.addEventListener('click', iterateDisplay);
+    }, [iterationBoard, props.flagPosition.x, props.flagPosition.y, searchResult])
 
-        return () => scope?.removeEventListener('click', iterateDisplay);
+    // Make sure full reset on change of props
+    useEffect (() => {
+        setTileLogicMapping(new Mapping2D<TileLogic>(props.height, props.width, TileLogic.notFound))
+        setArrows([]);
+        setShadows([]);
+        setSearchResult(undefined);
     }, [props])
     
     return <ArrowScope scopeRef={scopeRef} height={props.height} width={props.width} arrows={arrows}>
