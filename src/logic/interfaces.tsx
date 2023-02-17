@@ -7,6 +7,11 @@ export namespace AppInterfaces {
         Drawable,
         Movable
     }
+
+    export enum Algorithm {
+        Dijkstra = 0,
+        DeepFirstSearch = 1,
+    }
 }
 
 export namespace BoardInterfaces {
@@ -59,6 +64,8 @@ export namespace BoardInterfaces {
 
         getPassability : (position : Position) => boolean
         passabilityMap : Mapping2D<boolean>
+
+        algorithm : number
     }
 
 }
@@ -183,12 +190,20 @@ export namespace SettingsManagerInterface {
         className? : string
     }
 
+    export interface SelectProps {
+        options : string[],
+        choose : (ind : number) => void
+    }
+
     export interface SettingsManagerProps {
         height : StatePair<number>,
         width : StatePair<number>
 
         iterate : TogglePair<boolean>
         draw : TogglePair<boolean>
+
+        algorithmsNames : string[]
+        algorithmsChoose : (ind : number) => void
     }
 }
 

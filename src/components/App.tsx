@@ -16,6 +16,8 @@ function App() {
   const [height, setHeight] = useState(10);
 
   const [boardState, setBoardState] = useState(BoardState.Movable);
+  const [algorithm, setAlgorithm] = useState(AppInterfaces.Algorithm.Dijkstra);
+
   const [board, setBoard] = useState(new Mapping2D<boolean>(height, width, true));
 
   const [knightPosition, setKnightPosition] = useState<Position>(new Position(0, 0));
@@ -79,6 +81,8 @@ function App() {
       draw={{get : boardState === BoardState.Drawable, toggle : () => setBoardState((prevState) => {
         return (prevState === BoardState.Drawable) ? BoardState.Movable : BoardState.Drawable;
       })}}
+      algorithmsNames={['Dijkstra', 'Deep First Search']}
+      algorithmsChoose= {(a: number) => {setAlgorithm(a as AppInterfaces.Algorithm)}}
       ></SettingManager>
 
       </div>
@@ -112,7 +116,8 @@ function App() {
               knightPosition={knightPosition}
               flagPosition={flagPosition}
               getPassability={getPassability}
-              passabilityMap={board}/>
+              passabilityMap={board}
+              algorithm={algorithm}/>
           }
         })()
       }

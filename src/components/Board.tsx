@@ -17,7 +17,17 @@ import Position from "../logic/position";
 import { Board, ChessPointers, PathFindingIterators, SearchResult } from '@cocacola-lover/knight_path_finder';
 
 
-import iterator = PathFindingIterators.dijkstraSearchIterator;
+function convertAlgoId (id : number) {
+    switch (id) {
+        case 0 : 
+            return 'dijkstraSearchIterator'
+        case 1 :
+            return 'deepFirstSearchIterator'
+        default : 
+            return 'dijkstraSearchIterator'
+    }
+}
+
 const createPointer = 'createKnightPointer';
 
 const size = 600;
@@ -273,13 +283,12 @@ export function DisplayBoard (props : BoardInterfaces.DisplayBoardProps) {
         const scope = scopeRef.current;
 
         const logicBoard = new Board(height, width);
-        logicBoard.forEach((value, index1, index2) => 
-            logicBoard.setPassability(props.passabilityMap.arr) )
+        logicBoard.setPassability(props.passabilityMap.arr);
 
         const startPosition = logicBoard[createPointer](knightPosition.x, knightPosition.y);
         const endPosition = logicBoard[createPointer](flagPosition.x, flagPosition.y);
 
-        const ite = iterator(startPosition, endPosition);
+        const ite = PathFindingIterators[convertAlgoId(props.algorithm)](startPosition, endPosition);
 
         const iterateDisplay = () => {
 

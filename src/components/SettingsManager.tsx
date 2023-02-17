@@ -1,6 +1,7 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useRef } from 'react';
 import './css/SettingsManager.css';
-import { useState, useRef } from 'react';
+
+
 
 import { SettingsManagerInterface } from '../logic/interfaces';
 
@@ -25,6 +26,23 @@ function Button (props : SettingsManagerInterface.ButtonProps) {
             </button>
 }
 
+function SelectAlgorithm (props : SettingsManagerInterface.SelectProps) {
+
+    const selectRef = useRef<HTMLSelectElement>(null);
+
+    const onChange = () => {
+        if (selectRef.current === null) return;
+        props.choose(Number(selectRef.current.selectedOptions[0].value));
+        console.log(Number(selectRef.current.selectedOptions[0].value))
+    }
+
+    return (<select ref={selectRef} name='Algorithm' onChange={onChange}>
+        {props.options.map((str, index) => {
+            return <option key={index} value={index}>{str}</option>
+        })}
+    </select>)
+}
+
 export default function SettingManager (props : SettingsManagerInterface.SettingsManagerProps) {
 
     return (<div className='SettingManager'>
@@ -32,5 +50,8 @@ export default function SettingManager (props : SettingsManagerInterface.Setting
                 <Button className='Draw' state={props.draw}></Button>
                 <Slider value={props.height}/>
                 <Slider value={props.width}/>
+                <SelectAlgorithm 
+                options={props.algorithmsNames} 
+                choose={props.algorithmsChoose}/>
             </div>)
 }
