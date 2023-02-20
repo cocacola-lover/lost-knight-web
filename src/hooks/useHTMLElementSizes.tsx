@@ -1,6 +1,6 @@
 import { useLayoutEffect, useState } from "react";
-import { HTMLElementSizes } from "./interfaces";
-import Position from "./position";
+import { HTMLElementSizes } from "../logic/interfaces";
+import Position from "../logic/position";
 
 export default function useHTMLElementSizes(ref : React.RefObject<HTMLElement>) {
     const [sizes, setSizes] = useState<HTMLElementSizes>({width : 0, height : 0, position : new Position(0, 0)});
