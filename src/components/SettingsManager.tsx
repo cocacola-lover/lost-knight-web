@@ -53,5 +53,8 @@ export default function SettingManager (props : SettingsManagerInterface.Setting
                 <SelectAlgorithm 
                 options={props.algorithmsNames} 
                 choose={props.algorithmsChoose}/>
+                <SelectAlgorithm 
+                options={props.characterNames} 
+                choose={props.characterChoose}/>
             </div>)
 }
