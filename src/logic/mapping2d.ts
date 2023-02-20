@@ -10,13 +10,31 @@ export default class Mapping2D<Type> {
             for (let j = 0; j < height; j++) this.arr[i].push(defaultVal);
         }
     }
+    get width () {
+        return this.arr.length;
+    }
+
+    get height () {
+        return this.arr[0].length;
+    }
 
     at (position : Position) {
         return this.arr[position.x][position.y];
     }
 
+    safeAt(position : Position, defaultVal : Type) {
+        if (this.arr[position.x] !== undefined && this.arr[position.x][position.y] !== undefined)
+            return this.arr[position.x][position.y]
+        else return defaultVal;
+    }
+
     setAt (position : Position, value : Type) {
         this.arr[position.x][position.y] = value;
+    }
+
+    safeSetAt(position : Position, value : Type) {
+        if (this.arr[position.x] !== undefined && this.arr[position.x][position.y] !== undefined)
+            this.arr[position.x][position.y] = value;
     }
 
     map (func : (value : Type, index1 : number, index : number) => Type) {
