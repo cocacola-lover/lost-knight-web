@@ -1,195 +1,186 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useReducer } from "react";
 
-import { Settings, ChessPieceInterface, BoardInterfaces } from "../logic/interfaces";
+import { Settings, ChessPieceInterface, BoardInterfaces, TileInterfaces } from "../logic/interfaces";
 import Mapping2D from "../logic/mapping2d";
 import Position from "../logic/position";
 
 import { Board, ChessPointers, PathFindingIterators, SearchIterator } from "@cocacola-lover/knight_path_finder";
 
+import TileLogic = TileInterfaces.TileLogic;
+import ActionTypes = Settings.ActionTypes;
+import SetTileLogicAction = Settings.SetTileLogicAction;
+import SetTileLogicManyAction = Settings.SetTileLogicManyAction;
+
 export default function useSettings () {
 
-    /////
-    // Initialisation
-    /////
+    function reducer (state : Settings.Settings, action : Settings.SettingsAction) {
 
-    const [width, setWidth] = useState(10);
-    const [height, setHeight] = useState(10);
+        if (action.type === ActionTypes.ChangeSize){
 
-    const [board, setBoard] = useState(new Mapping2D<boolean>(height, width, true));
-  
-    const [knightPosition, setKnightPosition] = useState<Position>(new Position(0, 0));
-    const [flagPosition, setFlagPosition] = useState<Position>(new Position(1, 1));
+            // Assign new Sizes
+            const newSizes = action.payload as number[];
+            const newWidth = newSizes[0]; const newHeight = newSizes[1];
 
+            // New boardLogic
+            const newBoardLogic = state.boardLogic.scaleTo(
+                newHeight, newWidth, TileLogic.notFound
+                );
 
-    const [algorithm, setAlgorithm] = useState
-        <(start: ChessPointers.BasicPointer, end: ChessPointers.BasicPointer) => SearchIterator>
-            (() => PathFindingIterators.dijkstraSearchIterator);
+            // Scale Knight and Flag position if needed
+            let newKnightPosition = new Position(
+                state.knightPosition.x < newWidth ? state.knightPosition.x : newWidth - 1,
+                state.knightPosition.y < newHeight ? state.knightPosition.y : newHeight - 1,
+            );
+    
+            let newFlagPosition = new Position(
+                state.flagPosition.x < newWidth ? state.flagPosition.x : newWidth - 1,
+                state.flagPosition.y < newHeight ? state.flagPosition.y : newHeight - 1,
+            );
 
+            // Make sure there is no collision with each other
+            if (Position.same(newKnightPosition, newFlagPosition)) {
+                newKnightPosition = new Position(0, 0);
+                newFlagPosition = new Position(1, 1);
+            }
+            
+            // And with the unpassable Tiles
+            if (newBoardLogic.at(newKnightPosition) === TileLogic.unpassable) 
+                newBoardLogic.setAt(newKnightPosition, TileLogic.notFound)
+            if (newBoardLogic.at(newFlagPosition) === TileLogic.unpassable) 
+                newBoardLogic.setAt(newFlagPosition, TileLogic.notFound)
 
-    const [pieceSVG, setPieceSVG] = useState(() => ChessPieceInterface.KnightSVG);
-    const [piecePointer, setPiecePointer] = useState(() => ((x : number, y : number, board : Board) => new ChessPointers.KnightPointer(x, y, board.squares)));
+            return {
+                width : newWidth,
+                height : newHeight,
+                boardLogic : newBoardLogic,
 
-    /////
-    // Additional functions
-    /////
+                knightPosition : newKnightPosition,
+                flagPosition : newFlagPosition,
 
-    // Passability function
-
-    const getPassability = useCallback((pos : Position) => {
-        try {
-        return board.at(pos);
-        } catch (e) {}
-        return true;
-    }, [board]);
-
-    const setPassability = (pos : Position, value : boolean) => {
-      setBoard((previousState) => {
-        const newState = previousState.copy();
-        newState.setAt(pos, value);
-        return newState;
-      });
-    }
-
-    //Chooser Functions
-
-    const chooseSearchIterator = (id : Settings.Algorithm) => {
-      switch (id) {
-          case Settings.Algorithm.Dijkstra : 
-              setAlgorithm(() => PathFindingIterators.dijkstraSearchIterator);
-              break;
-
-          case Settings.Algorithm.DeepFirstSearch :
-              setAlgorithm(() => PathFindingIterators.deepFirstSearchIterator);
-              break;
-
-          case Settings.Algorithm.Greedy : 
-              setAlgorithm(() => PathFindingIterators.greedySearchIterator);
-              break;
-
-          case Settings.Algorithm.AStar :
-              setAlgorithm(() => PathFindingIterators.aStarSearchIterator);
-              break;
-      }
-    };
-
-    const choosePiece = (id : Settings.Character) => {
-        switch (id) {
-            case Settings.Character.Knight : 
-                setPieceSVG(() => ChessPieceInterface.KnightSVG);
-                setPiecePointer(() => (x:number, y:number, board:Board) => new ChessPointers.KnightPointer(x, y, board.squares));
-                break;
-            case Settings.Character.Bishop : 
-                setPieceSVG(() => ChessPieceInterface.BishopSVG);
-                setPiecePointer(() => (x:number, y:number, board:Board) => new ChessPointers.BishopPointer(x, y, board.squares));
-                break;
-            case Settings.Character.King : 
-                setPieceSVG(() => ChessPieceInterface.KingSVG);
-                setPiecePointer(() => (x:number, y:number, board:Board) => new ChessPointers.KingPointer(x, y, board.squares));
-                break;
-            case Settings.Character.Rook : 
-                setPieceSVG(() => ChessPieceInterface.RookSVG);
-                setPiecePointer(() => (x:number, y:number, board:Board) => new ChessPointers.RookPointer(x, y, board.squares));
-                break;
-            case Settings.Character.Pawn : 
-                setPieceSVG(() => ChessPieceInterface.PawnSVG);
-                setPiecePointer(() => (x:number, y:number, board:Board) => new ChessPointers.PawnPointer(x, y, board.squares));
-                break;
-            case Settings.Character.Queen : 
-                setPieceSVG(() => ChessPieceInterface.QueenSVG);
-                setPiecePointer(() => (x:number, y:number, board:Board) => new ChessPointers.QueenPointer(x, y, board.squares));
-                break;
+                pathFindingAlgo : state.pathFindingAlgo,
+                chessPiece : state.chessPiece
+            } as Settings.Settings
         }
+        if (action.type === ActionTypes.SetTileLogic) {
+            const tileAction = action.payload as SetTileLogicAction;
+
+            const newBoardLogic = state.boardLogic.copy();
+            newBoardLogic.setAt(tileAction.at, tileAction.to);
+
+            return Object.assign({}, state, {
+                boardLogic : newBoardLogic
+            }) as Settings.Settings;
+
+        }
+        if (action.type === ActionTypes.SetTileLogicMany) {
+            const newBoardLogic = (action.payload as SetTileLogicManyAction)(state.boardLogic);
+            
+            return Object.assign({}, state, {
+                boardLogic : newBoardLogic
+            }) as Settings.Settings;
+        }
+        if (action.type === ActionTypes.SetSearchIterator) {
+
+            let algorithm = PathFindingIterators.dijkstraSearchIterator;
+
+            switch (action.payload as Settings.Algorithm) {
+                case Settings.Algorithm.Dijkstra : 
+                    algorithm = PathFindingIterators.dijkstraSearchIterator;
+                    break;
+      
+                case Settings.Algorithm.DeepFirstSearch :
+                    algorithm = PathFindingIterators.deepFirstSearchIterator;
+                    break;
+      
+                case Settings.Algorithm.Greedy : 
+                    algorithm = PathFindingIterators.greedySearchIterator;
+                    break;
+      
+                case Settings.Algorithm.AStar :
+                    algorithm = PathFindingIterators.aStarSearchIterator;
+                    break;
+            }
+
+            return Object.assign({}, state, {
+                pathFindingAlgo : algorithm
+            }) as Settings.Settings;
+        }
+        if (action.type === ActionTypes.SetCharacter) {
+
+            let chessPiece : Settings.ChessPieceState;
+
+            switch (action.payload as Settings.Character) {
+                case Settings.Character.Knight : 
+                    chessPiece = {
+                        pieceSVG : ChessPieceInterface.KnightSVG,
+                        piecePointer : (x : number, y : number, board : Board) => new ChessPointers.KnightPointer(x, y, board.squares)
+                    }
+                    break;
+                case Settings.Character.Bishop : 
+                    chessPiece = {
+                        pieceSVG : ChessPieceInterface.BishopSVG,
+                        piecePointer : (x : number, y : number, board : Board) => new ChessPointers.BishopPointer(x, y, board.squares)
+                    }
+                    break;
+                case Settings.Character.King : 
+                    chessPiece = {
+                        pieceSVG : ChessPieceInterface.KingSVG,
+                        piecePointer : (x : number, y : number, board : Board) => new ChessPointers.KingPointer(x, y, board.squares)
+                    }
+                    break;
+                case Settings.Character.Rook : 
+                    chessPiece = {
+                        pieceSVG : ChessPieceInterface.RookSVG,
+                        piecePointer : (x : number, y : number, board : Board) => new ChessPointers.RookPointer(x, y, board.squares)
+                    }
+                    break;
+                case Settings.Character.Pawn : 
+                    chessPiece = {
+                        pieceSVG : ChessPieceInterface.PawnSVG,
+                        piecePointer : (x : number, y : number, board : Board) => new ChessPointers.PawnPointer(x, y, board.squares)
+                    }
+                    break;
+                case Settings.Character.Queen : 
+                    chessPiece = {
+                        pieceSVG : ChessPieceInterface.QueenSVG,
+                        piecePointer : (x : number, y : number, board : Board) => new ChessPointers.QueenPointer(x, y, board.squares)
+                    }
+                    break;
+            }
+            return Object.assign({}, state, {
+                chessPiece : chessPiece
+            }) as Settings.Settings;
+        }
+        if (action.type === ActionTypes.SetFlagPosition || action.type === ActionTypes.SetKnightPosition){
+
+            const newPosition = action.payload as Position;
+
+            switch (action.type) {
+                case ActionTypes.SetKnightPosition :
+                    return Object.assign({}, state, {
+                        knightPosition : newPosition
+                    });
+                case ActionTypes.SetFlagPosition : 
+                    return Object.assign({}, state, {
+                        flagPosition : newPosition
+                    });
+            }
+        }
+        return state;
     }
 
-    // Get names
+    return useReducer(reducer, {
+        width : 10,
+        height : 10,
+        boardLogic : new Mapping2D<TileInterfaces.TileLogic>(10, 10, TileInterfaces.TileLogic.notFound),
 
-    const algorithmNames = ['Dijkstra', 'Deep First Search', 'Greedy', 'A-Star'];
-    const pieceNames = ['Knight', 'King', 'Bishop', 'Rook', 'Pawn', 'Queen'];
+        knightPosition : new Position(0, 0),
+        flagPosition : new Position(1, 1),
 
-    /////
-    /// Function for building props for boards
-    /////
-
-    const getMovableSettings = () => {
-        return {
-            width, height,
-            pieceSVG, piecePointer,
-            knightPosition, flagPosition,
-            setKnightPosition, setFlagPosition,
-            getPassability
-        } as BoardInterfaces.MovableSettings
-    };
-
-    const getDrawableSettings = () => {
-        return {
-            width, height,
-            pieceSVG, piecePointer,
-            knightPosition, flagPosition,
-            getPassability, setPassability
-        } as BoardInterfaces.DrawableSettings
-    };
-
-    const getDisplaySettings = () => {
-        return {
-            width, height,
-            pieceSVG, piecePointer,
-            knightPosition, flagPosition,
-            getPassability, algorithm,
-            passabilityMap : board
-        } as BoardInterfaces.DisplaySettings
-    }
-
-
-    /////
-    /// UseEffects for Bug Prevention
-    /////
-
-    // Work with scaling
-    useEffect(() => {
-      setBoard((prevBoard) => {
-        const newAns = prevBoard.scaleTo(height, width, true);
-        console.log({newAns});
-        return newAns;
-      });
-
-      setKnightPosition((prevPosition) => new Position(
-            prevPosition.x < width ? prevPosition.x : width - 1,
-            prevPosition.y < height ? prevPosition.y : height - 1,
-      ));
-
-      setFlagPosition((prevPosition) => new Position(
-        prevPosition.x < width ? prevPosition.x : width - 1,
-        prevPosition.y < height ? prevPosition.y : height - 1,
-      ));
-
-    }, [width, height]);
-
-    // Collision prevention
-    useEffect(() => {
-      if (Position.same(knightPosition, flagPosition)) {
-        setKnightPosition(new Position(0, 0));
-        setFlagPosition(new Position(1, 1));
-      }
-
-      if (!getPassability(knightPosition)) setPassability(knightPosition, true);
-      if (!getPassability(flagPosition)) setPassability(flagPosition, true);
-    }, [knightPosition, flagPosition, getPassability])
-
-    /////
-    /// Return [Settings, SetSettings]
-    /////
-
-    const settings = {
-        width, height,
-        algorithmNames, pieceNames,
-        getPassability,
-        getMovableSettings, getDrawableSettings, getDisplaySettings,
-    } as Settings.Settings
-
-    const setSettings = {
-        setWidth, setHeight,
-        chooseSearchIterator, choosePiece
-    } as Settings.SetSettings
-
-    return {settings, setSettings};
-}   
+        pathFindingAlgo : PathFindingIterators.dijkstraSearchIterator,
+        chessPiece : {
+            pieceSVG : ChessPieceInterface.KnightSVG,
+            piecePointer : (x : number, y : number, board : Board) => new ChessPointers.KnightPointer(x, y, board.squares)
+        } as Settings.ChessPieceState
+    } as Settings.Settings)
+}

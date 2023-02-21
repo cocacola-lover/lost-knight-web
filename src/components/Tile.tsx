@@ -56,6 +56,9 @@ export function DisplayTile (props : TileInterfaces.DisplayTileProps) {
         case TileLogic.road : 
             tileLogic='road';
             break;
+        default : 
+            tileLogic='';
+            break;
     }
 
     return <BaseTile additionalClassName={tileLogic} tileRef={tileRef} passable={props.passable} black={props.black}>{props.children}</BaseTile>

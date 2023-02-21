@@ -5,6 +5,55 @@ import { Board, ChessPointers, SearchIterator } from '@cocacola-lover/knight_pat
 
 export namespace Settings {
 
+    export interface PathFindingAlgo {
+        (start: ChessPointers.BasicPointer, end: ChessPointers.BasicPointer) : SearchIterator
+    }
+
+    export interface SetTileLogicAction {
+        at : Position,
+        to : TileInterfaces.TileLogic
+    }
+
+    export interface SetTileLogicManyAction {
+        (prevBoard : Mapping2D<TileInterfaces.TileLogic>) : Mapping2D<TileInterfaces.TileLogic>
+    }
+
+
+    export enum ActionTypes {
+        ChangeSize = 0,
+        SetTileLogic = 1,
+        SetSearchIterator = 2,
+        SetCharacter = 3,
+        SetKnightPosition = 4,
+        SetFlagPosition = 5,
+        SetTileLogicMany = 6
+    }
+
+    export interface SettingsAction {
+        type : ActionTypes,
+        payload : number[] | SetTileLogicAction | SetTileLogicManyAction | Algorithm | Character | Position
+    }
+
+    export interface ChessPieceState {
+        pieceSVG: (color: string, opacity?: number | undefined) => JSX.Element,
+        piecePointer: (x: number, y: number, board: Board) => ChessPointers.BasicPointer
+    }
+
+    export interface Settings {
+        width : number,
+        height : number,
+        boardLogic : Mapping2D<TileInterfaces.TileLogic>,
+
+        knightPosition : Position,
+        flagPosition : Position,
+
+        pathFindingAlgo: PathFindingAlgo
+        chessPiece : ChessPieceState
+    }
+
+    export const algorithmNames = ['Dijkstra', 'Deep First Search', 'Greedy', 'A-Star'];
+    export const pieceNames = ['Knight', 'King', 'Bishop', 'Rook', 'Pawn', 'Queen'];
+
     export enum Algorithm {
         Dijkstra = 0,
         DeepFirstSearch = 1,
@@ -21,27 +70,6 @@ export namespace Settings {
         Queen = 5,
     }
 
-    export interface Settings {
-        width : number,
-        height : number,
-
-        algorithmNames : string[],
-        pieceNames : string[],
-
-        getPassability : (pos: Position, value: boolean) => void
-
-        getMovableSettings : () => BoardInterfaces.MovableSettings
-        getDrawableSettings : () => BoardInterfaces.DrawableSettings
-        getDisplaySettings : () => BoardInterfaces.DisplaySettings
-    }
-
-    export interface SetSettings {
-        setWidth : React.Dispatch<React.SetStateAction<number>>
-        setHeight : React.Dispatch<React.SetStateAction<number>>
-        chooseSearchIterator : (a : Algorithm) => void
-
-        choosePiece : (a : Character) => void
-    }
 }
 
 export namespace AppInterfaces {
@@ -59,80 +87,112 @@ export namespace AppInterfaces {
 
 export namespace BoardInterfaces {
 
-    export interface BaseBoardProps {
-        height : number
-        width : number
-
-        knightPosition : Position
-        flagPosition : Position
-        
-        boardRef? : React.RefObject<HTMLDivElement>
-        
-        getPassability : (position : Position) => boolean
-
-        createTile : (passable : boolean, pos: Position, child : JSX.Element | undefined) => JSX.Element
-        createPiece :  (pos: Position) => JSX.Element | undefined
+    export namespace BaseBoard {
+        export interface Settings {
+            height : number
+            width : number
+    
+            boardLogic : Mapping2D<TileInterfaces.TileLogic>
+        }
+    
+        export interface Props {
+            settings : Settings
+            
+            boardRef? : React.RefObject<HTMLDivElement>        
+    
+            createTile : (passable : boolean, pos: Position, child : JSX.Element | undefined) => JSX.Element
+            createPiece :  (pos: Position) => JSX.Element | undefined
+        }    
     }
 
-    export interface MovableSettings {
-        height : number,
-        width : number,
+    export namespace MovableBoard {
+        export interface ChessPieceState {
+            pieceSVG: (color: string, opacity?: number | undefined) => JSX.Element,
+        }
 
-        pieceSVG : (color: string, opacity?: number) => JSX.Element,
+        export interface Settings {
+            height : number,
+            width : number,
+    
+            chessPiece : ChessPieceState
+    
+            knightPosition : Position
+            flagPosition : Position
+    
+            boardLogic : Mapping2D<TileInterfaces.TileLogic>,
+        }
 
-        knightPosition : Position
-        flagPosition : Position
+        export enum ActionTypes {
+            SetKnightPosition = 4,
+            SetFlagPosition = 5
+        }
 
-        getPassability : (position : Position) => boolean
-
-        setKnightPosition : React.Dispatch<React.SetStateAction<Position>>
-        setFlagPosition : React.Dispatch<React.SetStateAction<Position>>
+        export interface SettingsAction {
+            type : ActionTypes,
+            payload : Position
+        }
+    
+        export interface Props {
+            settings : Settings
+            dispatch : React.Dispatch<Settings.SettingsAction>
+        }
     }
 
-    export interface MovableBoardProps {
-        settings : MovableSettings
+    export namespace DrawableBoard {
+        export interface ChessPieceState {
+            pieceSVG: (color: string, opacity?: number | undefined) => JSX.Element,
+        }
+
+        export interface Settings {
+            height : number,
+            width : number,
+    
+            chessPiece : ChessPieceState
+    
+            knightPosition : Position
+            flagPosition : Position
+    
+            boardLogic : Mapping2D<TileInterfaces.TileLogic>,
+        }
+
+        export enum ActionTypes {
+            SetTileLogic = 1,
+        }
+
+        export interface SettingsAction {
+            type : ActionTypes,
+            payload : Settings.SetTileLogicAction
+        }
+    
+        export interface Props {
+            settings : Settings
+            dispatch : React.Dispatch<Settings.SettingsAction>
+        }
     }
 
-    export interface DrawableSettings {
-        height : number,
-        width : number,
+    export namespace DisplayBoard {
 
-        pieceSVG : (color: string, opacity?: number) => JSX.Element,
+        export enum ActionTypes {
+            SetTileLogic = 1,
+            SetTileLogicMany = 6
+        }
 
-        knightPosition : Position,
-        flagPosition : Position,
-
-        getPassability : (position : Position) => boolean,
-        setPassability : (position : Position, value : boolean) => void,
+        export interface SettingsAction {
+            type : ActionTypes,
+            payload : Settings.SetTileLogicAction | Settings.SetTileLogicManyAction
+        }
+    
+        export interface Props {
+            settings : Settings.Settings
+            dispatch : React.Dispatch<Settings.SettingsAction>
+        }
     }
-
-    export interface DrawableBoardProps {
-        settings : DrawableSettings
-    }
-
-    export interface DisplaySettings {
-
-        pieceSVG : (color: string, opacity?: number) => JSX.Element,
-        piecePointer : (x : number, y : number, board : Board) => ChessPointers.BasicPointer,
-
-        knightPosition : Position,
-        flagPosition : Position,
-
-        getPassability : (position : Position) => boolean
-        passabilityMap : Mapping2D<boolean>
-
-        algorithm : (start: ChessPointers.BasicPointer, end: ChessPointers.BasicPointer) => SearchIterator
-    }
-
-    export interface DisplayBoardProps {
-        settings : DisplaySettings
-    }
-
 }
 
 export namespace TileInterfaces {
 
     export enum TileLogic {
+        unpassable,
         notFound,
         found,
         visited,
@@ -252,7 +312,7 @@ export namespace SettingsManagerInterface {
 
     export interface StatePair<Type> {
         get : Type,
-        set : React.Dispatch<React.SetStateAction<Type>>
+        set : (a : number) => void
     }
 
     export interface TogglePair<Type> {
