@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useReducer } from "react";
+import { useReducer } from "react";
 
-import { Settings, ChessPieceInterface, BoardInterfaces, TileInterfaces } from "../logic/interfaces";
+import { Settings, ChessPieceInterface, TileInterfaces } from "../logic/interfaces";
 import Mapping2D from "../logic/mapping2d";
 import Position from "../logic/position";
 
-import { Board, ChessPointers, PathFindingIterators, SearchIterator } from "@cocacola-lover/knight_path_finder";
+import { Board, ChessPointers, PathFindingIterators } from "@cocacola-lover/knight_path_finder";
 
 import TileLogic = TileInterfaces.TileLogic;
 import ActionTypes = Settings.ActionTypes;
@@ -74,7 +74,7 @@ export default function useSettings () {
         }
         if (action.type === ActionTypes.SetTileLogicMany) {
             const newBoardLogic = (action.payload as SetTileLogicManyAction)(state.boardLogic);
-            
+
             return Object.assign({}, state, {
                 boardLogic : newBoardLogic
             }) as Settings.Settings;

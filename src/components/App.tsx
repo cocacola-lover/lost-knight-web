@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import useSettings from '../hooks/useSettings';
-import Position from '../logic/position';
-import Mapping2D from '../logic/mapping2d';
+
 
 import SettingManager from './SettingsManager';
 import { AppInterfaces, Settings } from '../logic/interfaces';
