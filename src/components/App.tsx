@@ -1,51 +1,47 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import useSettings from '../hooks/useSettings';
 
 
 import SettingManager from './SettingsManager';
-import { AppInterfaces, Settings } from '../logic/interfaces';
+import { AppInterfaces, Settings, TileInterfaces } from '../logic/interfaces';
 import {MovableBoard, DrawableBoard, DisplayBoard} from './Board';
 
-import Actions = Settings.ActionTypes;
 import BoardState = AppInterfaces.BoardState;
+import Actions = Settings.ActionTypes;
+import TileLogic = TileInterfaces.TileLogic
 
 import './css/App.css';
 
-function App1 () {
+function App () {
 
   const [settings, dispatch] = useSettings();
 
   const [boardState, setBoardState] = useState(BoardState.Movable);
+
+  // Clean up board after display is turned off
+  useEffect(() => {
+    dispatch({
+      type : Actions.SetTileLogicMany,
+      payload : (prevBoard) => {
+        return prevBoard.map((value) => 
+                value === TileLogic.unpassable ? TileLogic.unpassable : TileLogic.notFound);;
+      }
+  });
+  }, [boardState, dispatch])
 
   return (
     <div className='App'>
       <div className='SettingsManagerWrapper'>
 
       <SettingManager
-      width={{get : settings.width, set : (newWidth : number) => dispatch({
-        type : Actions.ChangeSize,
-        payload : [newWidth, settings.height]
-      })}}
-      height={{get : settings.height, set : (newHeight : number) => dispatch({
-        type : Actions.ChangeSize,
-        payload : [settings.width, newHeight]
-      })}}
-      iterate={{get : boardState === BoardState.Display, toggle : () => setBoardState((prevState) => {
-        return (prevState === BoardState.Display) ? BoardState.Movable : BoardState.Display;
-      })}}
-      draw={{get : boardState === BoardState.Drawable, toggle : () => setBoardState((prevState) => {
-        return (prevState === BoardState.Drawable) ? BoardState.Movable : BoardState.Drawable;
-      })}}
-      algorithmsNames={Settings.algorithmNames}
-      algorithmsChoose= {(algo : number) => dispatch({
-        type : Actions.SetSearchIterator,
-        payload : algo
-      })}
-      characterNames={Settings.pieceNames}
-      characterChoose={(character : number) => dispatch({
-        type : Actions.SetCharacter,
-        payload : character
-      })}
+        settings={settings}
+        dispatch={dispatch}
+        boardState={boardState}
+        toggle={[
+          () => setBoardState(BoardState.Display),
+          () => setBoardState(BoardState.Drawable),
+          () => setBoardState(BoardState.Movable),
+        ]}
       ></SettingManager>
 
       </div>
@@ -75,4 +71,4 @@ function App1 () {
   )
 }
 
-export default App1;
+export default App;

@@ -1,29 +1,31 @@
 import React, { ChangeEvent, useRef } from 'react';
 import './css/SettingsManager.css';
 
+import { SettingsManagerInterface, Settings } from '../logic/interfaces';
 
+import Actions = Settings.ActionTypes;
 
-import { SettingsManagerInterface } from '../logic/interfaces';
-
-function Slider (props : SettingsManagerInterface.SliderProps) {
+function Slider ({value, onChange} : SettingsManagerInterface.SliderProps) {
 
     const handleSlider : React.ChangeEventHandler<HTMLInputElement> = (event : ChangeEvent<HTMLInputElement>) => {
-        props.value.set(Number((event.target as HTMLInputElement).value));
+        onChange(Number((event.target as HTMLInputElement).value));
     }
 
     return <div className="slidecontainer">
                 <div className="sliderCounter"  
-                    style={{left : `${(props.value.get - 2) * 5.3}%`}}>
-                {props.value.get}</div>
-                <input type="range" onChange={handleSlider}  min="2" max="20" value={props.value.get} className="slider" id="myRange"/>
+                    style={{left : `${(value - 2) * 5.3}%`}}>
+                {value}</div>
+                <input type="range" onChange={handleSlider}  min="2" max="20" value={value} className="slider" id="myRange"/>
             </div>
 }
 
-function Button (props : SettingsManagerInterface.ButtonProps) {
-    return <button className={`${props.className} ${props.state.get ? 'active' : 'inactive'}`}
-            onClick={props.state.toggle}>
-                {props.className}
-            </button>
+
+function ThreeButtons ({value, toggle} : SettingsManagerInterface.ButtonsProps) {
+    return (<div className='ThreeButtons'>
+        <button className={value === 0 ? 'active' : ''} onClick={toggle[0]}>Iterate</button>
+        <button className={value === 1 ? 'active' : ''} onClick={toggle[1]}>Draw</button>
+        <button className={value === 2 ? 'active' : ''} onClick={toggle[2]}>Move</button>
+    </div>)
 }
 
 function SelectAlgorithm (props : SettingsManagerInterface.SelectProps) {
@@ -45,16 +47,37 @@ function SelectAlgorithm (props : SettingsManagerInterface.SelectProps) {
 
 export default function SettingManager (props : SettingsManagerInterface.SettingsManagerProps) {
 
-    return (<div className='SettingManager'>
-                <Button className='Iterate' state={props.iterate}></Button>
-                <Button className='Draw' state={props.draw}></Button>
-                <Slider value={props.height}/>
-                <Slider value={props.width}/>
+    const {settings, dispatch} = props;
+
+    const sliderOnChangeWidth = (newWidth : number) => dispatch({
+        type : Actions.ChangeSize,
+        payload : [newWidth, settings.height]
+      });
+
+    const sliderOnChangeHeight = (newHeight : number) => dispatch({
+        type : Actions.ChangeSize,
+        payload : [ settings.width, newHeight,]
+      });
+
+    const algorithmsChoose = (algoId : number) => dispatch({
+        type : Actions.SetSearchIterator,
+        payload : algoId
+    });
+
+    const characterChoose = (characterId : number) => dispatch({
+        type : Actions.SetCharacter,
+        payload : characterId
+    });
+
+    return (<div className='SettingsManager'>
+                <ThreeButtons value={props.boardState} toggle={props.toggle}></ThreeButtons>
+                <Slider value={settings.height} onChange={sliderOnChangeHeight}/>
+                <Slider value={settings.width} onChange={sliderOnChangeWidth}/>
                 <SelectAlgorithm 
-                options={props.algorithmsNames} 
-                choose={props.algorithmsChoose}/>
+                options={Settings.algorithmNames} 
+                choose={algorithmsChoose}/>
                 <SelectAlgorithm 
-                options={props.characterNames} 
-                choose={props.characterChoose}/>
+                options={Settings.pieceNames} 
+                choose={characterChoose}/>
             </div>)
 }

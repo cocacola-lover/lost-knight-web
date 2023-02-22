@@ -74,14 +74,9 @@ export namespace Settings {
 
 export namespace AppInterfaces {
     export enum BoardState {
-        Display,
-        Drawable,
-        Movable
-    }
-
-    export enum Algorithm {
-        Dijkstra = 0,
-        DeepFirstSearch = 1,
+        Display = 0,
+        Drawable = 1,
+        Movable = 2
     }
 }
 
@@ -310,23 +305,10 @@ export namespace ArrowScopeInterface {
 
 export namespace SettingsManagerInterface {
 
-    export interface StatePair<Type> {
-        get : Type,
-        set : (a : number) => void
-    }
 
-    export interface TogglePair<Type> {
-        get : Type,
-        toggle : () => void
-    }
-
-    export interface SliderProps {
-        value : StatePair<number>
-    }
-
-    export interface ButtonProps {
-        state : TogglePair<boolean>
-        className? : string
+    export interface ButtonsProps {
+        value : AppInterfaces.BoardState
+        toggle : (() => void)[]
     }
 
     export interface SelectProps {
@@ -334,18 +316,17 @@ export namespace SettingsManagerInterface {
         choose : (ind : number) => void
     }
 
+    export interface SliderProps {
+        value : number,
+        onChange : (value : number) => void
+    }
+
     export interface SettingsManagerProps {
-        height : StatePair<number>,
-        width : StatePair<number>
+        settings : Settings.Settings;
+        dispatch : React.Dispatch<Settings.SettingsAction>
 
-        iterate : TogglePair<boolean>
-        draw : TogglePair<boolean>
-
-        algorithmsNames : string[]
-        algorithmsChoose : (ind : number) => void
-
-        characterNames : string[]
-        characterChoose : (ind : number) => void
+        boardState : AppInterfaces.BoardState
+        toggle : (() => void)[]
     }
 }
 
