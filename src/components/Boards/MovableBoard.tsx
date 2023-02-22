@@ -92,7 +92,6 @@ export default function MovableBoard ({settings, dispatch} : MovableBoardInterfa
     }
 
     return (
-        <div>
             <BaseBoard boardRef={boardRef} className='MovableBoard'
             settings={settings}
             createTile={
@@ -109,6 +108,5 @@ export default function MovableBoard ({settings, dispatch} : MovableBoardInterfa
                 else if (Position.same(pos, flagPosition))  return MovablePiece(setFlagMoving, pos.x + pos.y, ChessPieceInterface.FlagSVG)
                 else return undefined;
             }}/>
-        </div>
             )
 }

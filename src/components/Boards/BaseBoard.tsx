@@ -9,7 +9,7 @@ import BaseBoardInterfaces = BoardInterfaces.BaseBoard;
 import TileLogic = TileInterfaces.TileLogic;
 
 
-const size = 600;
+const size = 'min(90vh, 60vw)';
 
 export default function BaseBoard ({settings, boardRef, createPiece, createTile, className} : BaseBoardInterfaces.Props) {
 
@@ -55,22 +55,23 @@ export default function BaseBoard ({settings, boardRef, createPiece, createTile,
         }
     });
 
-    let pxWidth: number, pxHeight : number;
+    let pxWidth: string, pxHeight : string;
     if (height > width) {
         pxHeight = size;
-        pxWidth = size * width / height;
+        pxWidth = `calc(${size} * ${width / height})`;
     } else {
         pxWidth = size;
-        pxHeight = size * height / width;
+        pxHeight = `calc(${size} * ${height / width})`;
     }
+
+    console.log({pxHeight, pxWidth});
 
     return (
         <div className={`Board ${className === undefined ? '' : className}`} 
              ref={boardRef} 
              style={{
                 gridTemplate : `repeat(${height}, 1fr) / repeat(${width}, 1fr)`, 
-                width : `${pxWidth}px`, 
-                height : `${pxHeight}px`}}>
+                height : pxHeight, width : pxWidth}}>
                 {createBoard()}
         </div>
     )

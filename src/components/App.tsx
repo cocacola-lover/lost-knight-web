@@ -45,7 +45,7 @@ function App () {
       ></SettingManager>
 
       </div>
-
+      <div className='BoardWrapper'>
       {
         (() => {
           switch (boardState) {
@@ -67,6 +67,7 @@ function App () {
           }
         })()
       }
+      </div>
     </div>
   )
 }
