@@ -13,6 +13,7 @@
 
 .ChessPiece.flying {
     position: absolute;
+    cursor: grabbing;
 }
 
 .ChessPieceWrapper {
@@ -21,4 +22,6 @@
     display : flex;
     justify-content : center;
     align-items : center;
+
+    cursor: grab;
 }

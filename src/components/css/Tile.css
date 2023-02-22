@@ -28,3 +28,11 @@
 .Tile.road {
     background-color: green;
 }
+
+.DrawableBoard .Tile {
+    cursor: crosshair;
+}
+
+.DisplayBoard .Tile {
+    cursor : pointer
+}
