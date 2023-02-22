@@ -94,6 +94,7 @@ export namespace BoardInterfaces {
             settings : Settings
             
             boardRef? : React.RefObject<HTMLDivElement>        
+            className? : string
     
             createTile : (passable : boolean, pos: Position, child : JSX.Element | undefined) => JSX.Element
             createPiece :  (pos: Position) => JSX.Element | undefined
