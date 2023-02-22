@@ -190,7 +190,7 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
     }, [height, width, settings.pathFindingAlgo, settings.chessPiece])
     
     return <ArrowScope scopeRef={scopeRef} height={height} width={width} arrows={arrows}>
-        <BaseBoard boardRef={boardRef}
+        <BaseBoard boardRef={boardRef} className='DisplayBoard'
             settings={settings}
             createTile={
                 (passable, pos, child) => 

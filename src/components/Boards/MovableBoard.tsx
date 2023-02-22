@@ -92,7 +92,7 @@ export default function MovableBoard ({settings, dispatch} : MovableBoardInterfa
 
     return (
         <div>
-            <BaseBoard boardRef={boardRef} 
+            <BaseBoard boardRef={boardRef} className='MovableBoard'
             settings={settings}
             createTile={
                 (passable, pos, child) => 

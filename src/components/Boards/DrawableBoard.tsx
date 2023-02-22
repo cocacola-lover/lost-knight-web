@@ -69,7 +69,7 @@ export default function DrawableBoard ({settings, dispatch} : DrawableBoardInter
 
     const boardRef = useRef<HTMLDivElement>(null);
 
-    return <BaseBoard boardRef={boardRef}
+    return <BaseBoard boardRef={boardRef} className='DrawableBoard'
             settings={settings}
             createTile={
                 (passable, pos, child) => 

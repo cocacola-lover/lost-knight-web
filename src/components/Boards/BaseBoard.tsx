@@ -11,7 +11,7 @@ import TileLogic = TileInterfaces.TileLogic;
 
 const size = 600;
 
-export default function BaseBoard ({settings, boardRef, createPiece, createTile} : BaseBoardInterfaces.Props) {
+export default function BaseBoard ({settings, boardRef, createPiece, createTile, className} : BaseBoardInterfaces.Props) {
 
     const {height, width} = settings;
 
@@ -65,7 +65,7 @@ export default function BaseBoard ({settings, boardRef, createPiece, createTile}
     }
 
     return (
-        <div className="Board" 
+        <div className={`Board ${className === undefined ? '' : className}`} 
              ref={boardRef} 
              style={{
                 gridTemplate : `repeat(${height}, 1fr) / repeat(${width}, 1fr)`, 
