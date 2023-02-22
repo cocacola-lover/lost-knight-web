@@ -3,7 +3,7 @@ import { MovableChessPiece } from '../ChessPiece';
 import { SensibleTile } from '../Tile';
 import useHTMLElementSizes from '../../hooks/useHTMLElementSizes';
 
-import { BoardInterfaces, ChessPieceInterface, HTMLElementSizes } from '../../logic/interfaces';
+import { BoardInterfaces, ChessPieceInterface, HTMLElementSizes, TileInterfaces } from '../../logic/interfaces';
 
 import { useState, useEffect, useRef } from 'react';
 
@@ -67,7 +67,8 @@ export default function MovableBoard ({settings, dispatch} : MovableBoardInterfa
                     (event as MouseEvent).clientX,
                     (event as MouseEvent).clientY
                 ));
-                if (newPosition !== undefined) dispatch({
+                if (newPosition !== undefined 
+                    && settings.boardLogic.at(newPosition) !== TileInterfaces.TileLogic.unpassable) dispatch({
                     type : action,
                     payload : newPosition
                 });
