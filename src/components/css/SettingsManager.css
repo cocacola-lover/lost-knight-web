@@ -4,14 +4,25 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+
+
+  -webkit-user-select: none; /* Safari */        
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE10+/Edge */
+  user-select: none; /* Standard */
 }
 
 /* Three Buttons */
 
 .ThreeButtons {
   display: flex;
-  width: 50%;
+  width: 100%;
+}
+
+.ThreeButtons .wrapper {
+  display: flex;
   justify-content: space-around;
+  flex: 1;
 }
 
 .ThreeButtons button {
@@ -31,8 +42,21 @@
 
 /* All about slider*/
 
-.slidecontainer {
-    width: 100%; /* Width of the outside container */
+.Slider {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.label {
+  text-align: center;
+  width: max(20%, 5rem);
+}
+
+.slidercontainer {
+    flex: 1;
+    margin : 5px;
   }
   
   /* The slider itself */
@@ -70,12 +94,11 @@
     cursor: pointer; /* Cursor on hover */
   }
 
+  .sliderCounterStatic {
+    text-align: center;
+  }
+
   .sliderCounter {
     text-align: start;
     position: relative;
-
-    -webkit-user-select: none; /* Safari */        
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* IE10+/Edge */
-    user-select: none; /* Standard */
   }
