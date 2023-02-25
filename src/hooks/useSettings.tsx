@@ -164,8 +164,17 @@ export default function useSettings () {
             }
         }
         if (action.type === ActionTypes.SetWeights) {
-            console.log(Object.assign({}, state, {weightSettings : (action.payload as Settings.WeightSettings)}) as Settings.Settings)
-            return Object.assign({}, state, {weightSettings : (action.payload as Settings.WeightSettings)}) as Settings.Settings;
+
+            return Object.assign({}, state, {
+                weightSettings : (action.payload as Settings.WeightSettings)}) as Settings.Settings;
+        }
+        if (action.type === ActionTypes.SetIterationSpeed) {
+
+            const newIterationSpeed = action.payload as number | null;
+
+            return Object.assign({}, state, {
+                iterationSpeed : newIterationSpeed
+            }) as Settings.Settings;
         }
         return state;
     }
@@ -173,6 +182,8 @@ export default function useSettings () {
     return useReducer(reducer, {
         width : 8,
         height : 8,
+
+        iterationSpeed : 500,
 
         boardLogic : new Mapping2D<TileInterfaces.TileLogic>(8, 8, TileInterfaces.TileLogic.notFound),
         weightSettings : {

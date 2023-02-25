@@ -27,7 +27,8 @@ export namespace Settings {
         SetKnightPosition = 4,
         SetFlagPosition = 5,
         SetTileLogicMany = 6,
-        SetWeights = 7
+        SetWeights = 7,
+        SetIterationSpeed = 8,
     }
 
     export interface WeightSettings {
@@ -40,7 +41,8 @@ export namespace Settings {
     export interface SettingsAction {
         type : ActionTypes,
         payload : number[] | SetTileLogicAction | 
-        SetTileLogicManyAction | Algorithm | Character | Position | WeightSettings
+        SetTileLogicManyAction | Algorithm | Character | Position |
+        WeightSettings | number | null
     }
 
     export interface ChessPieceState {
@@ -51,6 +53,8 @@ export namespace Settings {
     export interface Settings {
         width : number,
         height : number,
+
+        iterationSpeed : number | null,
 
         boardLogic : Mapping2D<TileInterfaces.TileLogic>,
         weightSettings : WeightSettings
@@ -65,6 +69,9 @@ export namespace Settings {
 
     export const algorithmNames = ['Dijkstra', 'Deep First Search', 'Greedy', 'A-Star'];
     export const pieceNames = ['Knight', 'King', 'Bishop', 'Rook', 'Pawn', 'Queen'];
+
+    export const iterationSpeedValues = [null, 5000, 2000, 1000, 700, 500, 300, 100, 50];
+    export const iterationSpeedLabels = ['Only on click', 'Once every 5 seconds', 'Once every 2 seconds', 'Once every second', '10 times in 7 seconds', '2 times in a second', '3 times in a second', '10 times in a second', '20 times in a second'];
 
     export enum Algorithm {
         Dijkstra = 0,
@@ -343,6 +350,14 @@ export namespace SettingsManagerInterface {
     export interface SliderProps {
         value : number,
         onChange : (value : number) => void
+        label : string
+    }
+
+    export interface VelocitySliderProps {
+        value : number | null,
+        onChange : (value : number | null) => void,
+        sliderValues : (number | null)[],
+        sliderLabels : string[]
     }
 
     export interface SettingsManagerProps {
