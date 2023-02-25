@@ -26,12 +26,21 @@ export namespace Settings {
         SetCharacter = 3,
         SetKnightPosition = 4,
         SetFlagPosition = 5,
-        SetTileLogicMany = 6
+        SetTileLogicMany = 6,
+        SetWeights = 7
+    }
+
+    export interface WeightSettings {
+        avoidWhite : boolean,
+        avoidBlack : boolean,
+        avoidCenter : boolean,
+        avoidCorners : boolean
     }
 
     export interface SettingsAction {
         type : ActionTypes,
-        payload : number[] | SetTileLogicAction | SetTileLogicManyAction | Algorithm | Character | Position
+        payload : number[] | SetTileLogicAction | 
+        SetTileLogicManyAction | Algorithm | Character | Position | WeightSettings
     }
 
     export interface ChessPieceState {
@@ -42,13 +51,16 @@ export namespace Settings {
     export interface Settings {
         width : number,
         height : number,
+
         boardLogic : Mapping2D<TileInterfaces.TileLogic>,
+        weightSettings : WeightSettings
 
         knightPosition : Position,
         flagPosition : Position,
 
         pathFindingAlgo: PathFindingAlgo
         chessPiece : ChessPieceState
+
     }
 
     export const algorithmNames = ['Dijkstra', 'Deep First Search', 'Greedy', 'A-Star'];
@@ -306,6 +318,10 @@ export namespace ArrowScopeInterface {
 
 export namespace SettingsManagerInterface {
 
+    export interface CheckBoxesProps {
+        values : Object,
+        toggleOnKey : ((key : string, value : boolean) => void),
+    }
 
     export interface ButtonsProps {
         value : AppInterfaces.BoardState
@@ -315,6 +331,13 @@ export namespace SettingsManagerInterface {
     export interface SelectProps {
         options : string[],
         choose : (ind : number) => void
+    }
+
+    export interface SelectAlgorithmProps {
+        options : string[],
+        choose : (ind : number) => void,
+        settings : Settings.WeightSettings,
+        toggleCheckBoxes : ((key : string, value : boolean) => void)
     }
 
     export interface SliderProps {

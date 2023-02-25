@@ -1,9 +1,10 @@
-import React, { ChangeEvent, useRef } from 'react';
+import React, { ChangeEvent, useRef, useState } from 'react';
 import './css/SettingsManager.css';
 
 import { SettingsManagerInterface, Settings } from '../logic/interfaces';
 
 import Actions = Settings.ActionTypes;
+import Algorithm = Settings.Algorithm;
 
 function Slider ({value, onChange} : SettingsManagerInterface.SliderProps) {
 
@@ -28,17 +29,74 @@ function ThreeButtons ({value, toggle} : SettingsManagerInterface.ButtonsProps) 
     </div>)
 }
 
-function SelectAlgorithm (props : SettingsManagerInterface.SelectProps) {
+function CheckBoxes ({values, toggleOnKey} : SettingsManagerInterface.CheckBoxesProps) {
+    return (
+        <div>
+            {(function createCheckBoxes () {
 
+                const ans : JSX.Element[] = []
+
+                for (const [key, value] of Object.entries(values)) {
+
+                    const onClick = (event : ChangeEvent) => {
+                        toggleOnKey(key, (event.target as HTMLInputElement).checked);
+                    }
+
+                    ans.push((
+                        <div key={key}>
+                            <input type="checkbox" id={`checkbox ${key}`} checked={!!value} onChange={onClick}/>
+                            <label htmlFor={`checkbox ${key}`}>{key}</label>
+                        </div>
+                    ));
+                }
+
+                return ans;
+            })()}
+        </div>
+    )
+}
+
+function SelectAlgorithm (props : SettingsManagerInterface.SelectAlgorithmProps) {
+
+    const selectRef = useRef<HTMLSelectElement>(null);
+    const [displayCheckBoxes, setDisplayCheckBoxes] = useState<boolean>(true)
+
+    const onChange = () => {
+        if (selectRef.current === null) return;
+
+        const newInput = Number(selectRef.current.selectedOptions[0].value);
+
+        props.choose(newInput);
+
+        if (newInput === Algorithm.Dijkstra) setDisplayCheckBoxes(true);
+        else setDisplayCheckBoxes(false);
+    }
+
+    return (<div><select ref={selectRef} name='Algorithm' onChange={onChange}>
+        <option value={Algorithm.Dijkstra}>{props.options[Algorithm.Dijkstra]}</option>
+        <option value={Algorithm.DeepFirstSearch}>{props.options[Algorithm.DeepFirstSearch]}</option>
+        <option value={Algorithm.Greedy}>{props.options[Algorithm.Greedy]}</option>
+        <option value={Algorithm.AStar}>{props.options[Algorithm.AStar]}</option>
+    </select>
+    {
+        (function CreateCheckBoxesForWeights () {
+            if (!displayCheckBoxes) return;
+            return <CheckBoxes 
+            values={props.settings}
+            toggleOnKey={props.toggleCheckBoxes}/>
+        })()
+    }
+    </div>)
+}
+
+function SelectPiece (props : SettingsManagerInterface.SelectProps) {
     const selectRef = useRef<HTMLSelectElement>(null);
 
     const onChange = () => {
         if (selectRef.current === null) return;
         props.choose(Number(selectRef.current.selectedOptions[0].value));
-        console.log(Number(selectRef.current.selectedOptions[0].value))
     }
-
-    return (<select ref={selectRef} name='Algorithm' onChange={onChange}>
+    return (<select ref={selectRef} name='Piece' onChange={onChange}>
         {props.options.map((str, index) => {
             return <option key={index} value={index}>{str}</option>
         })}
@@ -69,14 +127,25 @@ export default function SettingManager (props : SettingsManagerInterface.Setting
         payload : characterId
     });
 
+    const weightToggle = (key : string, value : boolean) => {
+        dispatch({
+            type : Actions.SetWeights,
+            payload :  (Object.assign({}, settings.weightSettings, {
+                [key] : value
+            })) as Settings.WeightSettings
+        })
+    }
+
     return (<div className='SettingsManager'>
                 <ThreeButtons value={props.boardState} toggle={props.toggle}></ThreeButtons>
                 <Slider value={settings.height} onChange={sliderOnChangeHeight}/>
                 <Slider value={settings.width} onChange={sliderOnChangeWidth}/>
-                <SelectAlgorithm 
+                <SelectAlgorithm
+                settings={settings.weightSettings}
+                toggleCheckBoxes={weightToggle}
                 options={Settings.algorithmNames} 
                 choose={algorithmsChoose}/>
-                <SelectAlgorithm 
+                <SelectPiece 
                 options={Settings.pieceNames} 
                 choose={characterChoose}/>
             </div>)

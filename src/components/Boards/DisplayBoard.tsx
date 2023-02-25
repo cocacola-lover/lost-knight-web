@@ -10,6 +10,7 @@ import { useState, useRef, useMemo, useEffect } from 'react';
 import Position from '../../logic/position';
 import Mapping2D from '../../logic/mapping2d';
 
+import { createWeightMap } from '../../logic/weightMap';
 import { Board, ChessPointers, SearchResult } from '@cocacola-lover/knight_path_finder';
 
 import DisplayBoardInterfaces = BoardInterfaces.DisplayBoard;
@@ -45,10 +46,13 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
             );
 
         logicBoard.setPassability(passabilityMap.arr);
+        logicBoard.setWeight(createWeightMap(height, width, settings.weightSettings).arr);
+
+        console.log(createWeightMap(height, width, settings.weightSettings).arr);
 
         return logicBoard;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [width, height, settings.pathFindingAlgo, settings.chessPiece]);
+    }, [width, height, settings.pathFindingAlgo, settings.chessPiece, settings.weightSettings]);
 
     const iterate = useMemo(() => {
         const startPosition = settings.chessPiece.piecePointer(settings.knightPosition.x, settings.knightPosition.y, iterationBoard);
@@ -76,7 +80,7 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
         }
 
         scope?.addEventListener('click', ite);
-        const id = setTimeout(ite, 500);
+        const id = setTimeout(ite, 300);
 
         return () => {
             scope?.removeEventListener('click', ite);
@@ -187,7 +191,7 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
         setShadows([]);
         setSearchResult(undefined);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [height, width, settings.pathFindingAlgo, settings.chessPiece])
+    }, [height, width, settings.pathFindingAlgo, settings.chessPiece, settings.weightSettings])
     
     return <ArrowScope scopeRef={scopeRef} height={height} width={width} arrows={arrows}>
         <BaseBoard boardRef={boardRef} className='DisplayBoard'
