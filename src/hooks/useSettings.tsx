@@ -49,17 +49,14 @@ export default function useSettings () {
             if (newBoardLogic.at(newFlagPosition) === TileLogic.unpassable) 
                 newBoardLogic.setAt(newFlagPosition, TileLogic.notFound)
 
-            return {
+            return Object.assign({}, state, {
                 width : newWidth,
                 height : newHeight,
                 boardLogic : newBoardLogic,
 
                 knightPosition : newKnightPosition,
                 flagPosition : newFlagPosition,
-
-                pathFindingAlgo : state.pathFindingAlgo,
-                chessPiece : state.chessPiece
-            } as Settings.Settings
+            }) as Settings.Settings;
         }
         if (action.type === ActionTypes.SetTileLogic) {
             const tileAction = action.payload as SetTileLogicAction;
@@ -166,13 +163,24 @@ export default function useSettings () {
                     });
             }
         }
+        if (action.type === ActionTypes.SetWeights) {
+            console.log(Object.assign({}, state, {weightSettings : (action.payload as Settings.WeightSettings)}) as Settings.Settings)
+            return Object.assign({}, state, {weightSettings : (action.payload as Settings.WeightSettings)}) as Settings.Settings;
+        }
         return state;
     }
 
     return useReducer(reducer, {
-        width : 10,
-        height : 10,
-        boardLogic : new Mapping2D<TileInterfaces.TileLogic>(10, 10, TileInterfaces.TileLogic.notFound),
+        width : 8,
+        height : 8,
+
+        boardLogic : new Mapping2D<TileInterfaces.TileLogic>(8, 8, TileInterfaces.TileLogic.notFound),
+        weightSettings : {
+            avoidWhite : false,
+            avoidBlack : false,
+            avoidCenter : false,
+            avoidCorners : false
+        },
 
         knightPosition : new Position(0, 0),
         flagPosition : new Position(1, 1),
