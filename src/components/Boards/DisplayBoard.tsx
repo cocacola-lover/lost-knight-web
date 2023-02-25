@@ -80,13 +80,16 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
         }
 
         scope?.addEventListener('click', ite);
-        const id = setTimeout(ite, 300);
+
+        const id : NodeJS.Timeout | null = settings.iterationSpeed !== null ? 
+            setTimeout(ite, settings.iterationSpeed) 
+            : null;
 
         return () => {
             scope?.removeEventListener('click', ite);
-            clearTimeout(id);
+            if (id !== null) clearTimeout(id);
         }
-    }, [iterate, searchResult]);
+    }, [iterate, searchResult, settings.iterationSpeed]);
 
     // Display Changes
     useEffect(() => {
