@@ -11,7 +11,7 @@ function BaseTile (props : TileInterfaces.BaseTileProps) {
     const color = props.black ? 'black' : 'white';
     const passable = props.passable === false ? 'unpassable' : 'passable';
 
-    return <div ref={props.tileRef} className={`Tile ${color} ${passable} ${props.additionalClassName}`}>
+    return <div ref={props.tileRef} className={`Tile ${color} ${passable} ${props.additionalClassName ?? ''}`}>
         {props.children}
     </div>
 }
