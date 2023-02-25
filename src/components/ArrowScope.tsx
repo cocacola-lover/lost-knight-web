@@ -19,7 +19,7 @@ function Arrow (props : ArrowScopeInterface.ArrowProps) {
     }}>
         <div className="Stick" style={{
             width : `${stickWidth}px`,
-            height : `${length - arrowHeight - 20}px`,
+            height : `${length* 0.9 - arrowHeight}px`,
             margin : `0px ${(arrowWidth - stickWidth) / 2}px`,
             marginTop : '10px',
             marginBottom : '2px'
@@ -35,7 +35,7 @@ function Arrow (props : ArrowScopeInterface.ArrowProps) {
 
 Arrow.defaultProps = {
     stickWidth : 10,
-    arrowWidth : 40,
+    arrowWidth : 30,
     arrowHeight : 30,
 }
 
