@@ -64,8 +64,6 @@ export default function BaseBoard ({settings, boardRef, createPiece, createTile,
         pxHeight = `calc(${size} * ${height / width})`;
     }
 
-    console.log({pxHeight, pxWidth});
-
     return (
         <div className={`Board ${className === undefined ? '' : className}`} 
              ref={boardRef} 
