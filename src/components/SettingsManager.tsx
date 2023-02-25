@@ -6,26 +6,51 @@ import { SettingsManagerInterface, Settings } from '../logic/interfaces';
 import Actions = Settings.ActionTypes;
 import Algorithm = Settings.Algorithm;
 
-function Slider ({value, onChange} : SettingsManagerInterface.SliderProps) {
+function DimensionSlider ({value, onChange, label} : SettingsManagerInterface.SliderProps) {
 
     const handleSlider : React.ChangeEventHandler<HTMLInputElement> = (event : ChangeEvent<HTMLInputElement>) => {
         onChange(Number((event.target as HTMLInputElement).value));
     }
 
-    return <div className="slidecontainer">
+    return <div className='Slider'>
+        <div className='label'>{label}</div> 
+        <div className="slidercontainer">
                 <div className="sliderCounter"  
                     style={{left : `${(value - 2) * 5.3}%`}}>
                 {value}</div>
-                <input type="range" onChange={handleSlider}  min="2" max="20" value={value} className="slider" id="myRange"/>
+                <input type="range" onChange={handleSlider}  min="2" max="20" value={value} className="slider"/>
+        </div>
             </div>
+}
+
+function VelocitySlider ({value, onChange, sliderValues, sliderLabels} : SettingsManagerInterface.VelocitySliderProps) {
+    
+    const handleSlider : React.ChangeEventHandler<HTMLInputElement> = (event : ChangeEvent<HTMLInputElement>) => {
+        onChange(sliderValues[Number((event.target as HTMLInputElement).value)]);
+    }
+
+    const valueIndex = sliderValues.findIndex((e) => e === value);
+
+    return (<div className='Slider'>
+        <div className='label'>{'Iteration Speed'}</div> 
+        <div className='slidercontainer'>
+
+            <div className="sliderCounterStatic">{ sliderLabels[valueIndex] }</div>
+            
+            <input type="range" onChange={handleSlider}  min="0" max={sliderValues.length - 1} value={valueIndex} className="slider"/>
+        </div>
+    </div>)
 }
 
 
 function ThreeButtons ({value, toggle} : SettingsManagerInterface.ButtonsProps) {
     return (<div className='ThreeButtons'>
-        <button className={value === 0 ? 'active' : ''} onClick={toggle[0]}>Iterate</button>
-        <button className={value === 1 ? 'active' : ''} onClick={toggle[1]}>Draw</button>
-        <button className={value === 2 ? 'active' : ''} onClick={toggle[2]}>Move</button>
+        <div className='label'></div>
+        <div className='wrapper'>
+            <button className={value === 0 ? 'active' : ''} onClick={toggle[0]}>Iterate</button>
+            <button className={value === 1 ? 'active' : ''} onClick={toggle[1]}>Draw</button>
+            <button className={value === 2 ? 'active' : ''} onClick={toggle[2]}>Move</button>
+        </div>
     </div>)
 }
 
@@ -127,24 +152,37 @@ export default function SettingManager (props : SettingsManagerInterface.Setting
         payload : characterId
     });
 
-    const weightToggle = (key : string, value : boolean) => {
-        dispatch({
+    const weightToggle = (key : string, value : boolean) => dispatch({
             type : Actions.SetWeights,
             payload :  (Object.assign({}, settings.weightSettings, {
                 [key] : value
             })) as Settings.WeightSettings
-        })
-    }
+    });
+
+    const setIterationSpeed = (velocity : number | null) => dispatch({
+        type : Actions.SetIterationSpeed,
+        payload : velocity
+    })
 
     return (<div className='SettingsManager'>
                 <ThreeButtons value={props.boardState} toggle={props.toggle}></ThreeButtons>
-                <Slider value={settings.height} onChange={sliderOnChangeHeight}/>
-                <Slider value={settings.width} onChange={sliderOnChangeWidth}/>
+
+                <DimensionSlider label='Height' value={settings.height} onChange={sliderOnChangeHeight}/>
+                <DimensionSlider label='Width' value={settings.width} onChange={sliderOnChangeWidth}/>
+
+                <VelocitySlider 
+                value={settings.iterationSpeed}
+                onChange={setIterationSpeed}
+                sliderValues={Settings.iterationSpeedValues}
+                sliderLabels={Settings.iterationSpeedLabels}
+                ></VelocitySlider>
+
                 <SelectAlgorithm
                 settings={settings.weightSettings}
                 toggleCheckBoxes={weightToggle}
                 options={Settings.algorithmNames} 
                 choose={algorithmsChoose}/>
+
                 <SelectPiece 
                 options={Settings.pieceNames} 
                 choose={characterChoose}/>
