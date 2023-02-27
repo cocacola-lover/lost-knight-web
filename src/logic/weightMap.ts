@@ -16,12 +16,12 @@ export function createWeightMap (height : number, width : number, settings : Set
     }
     if (settings.avoidCorners) {
         ans = ans.map((value, index1, index2) =>{
-            return value + Math.sqrt((index1 - (height - 1) / 2) * (index1 - (height - 1) / 2) + (index2 - (width - 1) / 2) * (index2 - (width - 1) / 2));
+            return value + Math.sqrt((index1 - (width - 1) / 2) * (index1 - (width - 1) / 2) + (index2 - (height - 1) / 2) * (index2 - (height - 1) / 2));
         })
     }
     if (settings.avoidCenter) {
         ans = ans.map((value, index1, index2) =>{
-            return value - Math.sqrt((index1 - (height - 1) / 2) * (index1 - (height - 1) / 2) + (index2 - (width - 1) / 2) * (index2 - (width - 1) / 2));
+            return value - Math.sqrt((index1 - (width - 1) / 2) * (index1 - (width - 1) / 2) + (index2 - (height - 1) / 2) * (index2 - (height - 1) / 2));
         })
     }
 
