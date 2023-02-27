@@ -1,5 +1,6 @@
 import './css/ArrowScope.css';
 import { useState, useLayoutEffect } from 'react';
+import useHTMLElementSizes from '../hooks/useHTMLElementSizes';
 import { ArrowScopeInterface } from "../logic/interfaces";
 import Position from '../logic/position';
 
@@ -44,14 +45,14 @@ export default function ArrowScope (props : ArrowScopeInterface.ArrowScopeProps)
     const [stepRight, setStepRight] = useState<number>(0);
     const [stepDown, setStepDown] = useState<number>(0);
 
+    const htmlElementSizes = useHTMLElementSizes(props.scopeRef);
 
     useLayoutEffect(() => {
         if (props.scopeRef.current !== null) {
-            setStepRight(props.scopeRef.current.offsetWidth / props.width / 2)
-            setStepDown(props.scopeRef.current.offsetHeight / props.height / 2)
+            setStepRight(htmlElementSizes.width / props.width / 2)
+            setStepDown(htmlElementSizes.height / props.height / 2)
         }
-
-    }, [props])
+    }, [props, htmlElementSizes])
 
 
     return <div ref={props.scopeRef} className="ArrowScope">
