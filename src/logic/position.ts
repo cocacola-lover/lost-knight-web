@@ -1,3 +1,8 @@
+/*
+    Convenience Class to pass around coordinates on boards
+*/
+
+
 export default class Position {
     public x : number;
     public y : number;

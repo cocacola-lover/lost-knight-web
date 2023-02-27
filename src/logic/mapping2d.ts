@@ -1,5 +1,9 @@
 import Position from "./position";
 
+/*
+    Convenience Class to easily deal with two-dimensional arrays using Positions
+*/
+
 export default class Mapping2D<Type> {
     public arr : Type[][];
 

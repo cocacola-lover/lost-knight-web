@@ -2,6 +2,11 @@ import { useLayoutEffect, useState } from "react";
 import { HTMLElementSizes } from "../logic/interfaces";
 import Position from "../logic/position";
 
+/*
+  A hook to watch HTMLElement's dimensions and position relative to the root.
+  Updates ONLY on window's resize or element resize. Because of this position depending on circumstanses can be not up to date.
+*/
+
 export default function useHTMLElementSizes(ref : React.RefObject<HTMLElement>) {
     const [sizes, setSizes] = useState<HTMLElementSizes>({width : 0, height : 0, position : new Position(0, 0)});
 

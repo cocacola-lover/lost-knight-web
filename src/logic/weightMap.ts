@@ -1,7 +1,11 @@
 import Mapping2D from "./mapping2d";
 import { Settings } from "./interfaces";
 
-export function createWeightMap (height : number, width : number, settings : Settings.WeightSettings) {
+/*
+    Convenience function to create Weight Maps for iterators
+*/
+
+export default function createWeightMap (height : number, width : number, settings : Settings.WeightSettings) {
     let ans = new Mapping2D<number>(height, width, 0);
 
     if (settings.avoidBlack) {
