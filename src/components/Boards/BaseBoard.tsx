@@ -1,12 +1,16 @@
 import './../css/Board.css';
-import { BoardInterfaces, TileInterfaces } from '../../logic/interfaces';
+import { BoardInterfaces } from '../../logic/interfaces';
 
 import { useEffect } from 'react';
 
 import Position from '../../logic/position';
 
 import BaseBoardInterfaces = BoardInterfaces.BaseBoard;
-import TileLogic = TileInterfaces.TileLogic;
+
+/*
+    Constructor component for Boards. Needs createPiece and createTile function to build a board.
+    Uses css functions to make Boards responsive
+*/
 
 
 const size = 'min(90vh, 60vw)';
@@ -15,32 +19,30 @@ export default function BaseBoard ({settings, boardRef, createPiece, createTile,
 
     const {height, width} = settings;
 
-    const getPassability = (position : Position) => {
-        return settings.boardLogic.at(position) !== TileLogic.unpassable;
-    }
-
     const createBoard = () => {
         const ans : JSX.Element[][] = [];
 
         for (let i = 0; i < height; i++){
+
             ans.push([]);
+
             for (let j = 0; j < width; j++) {
 
                 const position = new Position(j, i);
+                const tileLogic = settings.boardLogic.at(position);
 
                 ans[i].push(
                     createTile(
-                        getPassability(position), 
+                        tileLogic,
                         position,
                         createPiece(position)
-                        )
-                );
+                ));
             }
         }
         return ans;
     }
 
-    // Weird drag bug prevention
+    // Firefox drag bug prevention
     useEffect(() => {
         if (boardRef === undefined) return;
         const board = boardRef.current;
@@ -55,13 +57,13 @@ export default function BaseBoard ({settings, boardRef, createPiece, createTile,
         }
     });
 
-    let pxWidth: string, pxHeight : string;
+    let relativeWidth: string, relativeHeight : string;
     if (height > width) {
-        pxHeight = size;
-        pxWidth = `calc(${size} * ${width / height})`;
+        relativeHeight = size;
+        relativeWidth = `calc(${size} * ${width / height})`;
     } else {
-        pxWidth = size;
-        pxHeight = `calc(${size} * ${height / width})`;
+        relativeWidth = size;
+        relativeHeight = `calc(${size} * ${height / width})`;
     }
 
     return (
@@ -69,7 +71,7 @@ export default function BaseBoard ({settings, boardRef, createPiece, createTile,
              ref={boardRef} 
              style={{
                 gridTemplate : `repeat(${height}, 1fr) / repeat(${width}, 1fr)`, 
-                height : pxHeight, width : pxWidth}}>
+                height : relativeHeight, width : relativeWidth}}>
                 {createBoard()}
         </div>
     )

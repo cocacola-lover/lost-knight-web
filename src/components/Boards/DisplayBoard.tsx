@@ -1,29 +1,34 @@
-import BaseBoard from './BaseBoard';
-import { ChessPiece } from '../ChessPiece';
-import { DisplayTile } from '../Tile';
-import ArrowScope from '../ArrowScope';
-
-import { BoardInterfaces, ChessPieceInterface, TileInterfaces, ArrowScopeInterface } from '../../logic/interfaces';
-
+// React
 import { useState, useRef, useMemo, useEffect } from 'react';
 
+// Components
+import BaseBoard from './BaseBoard';
+import { ChessPiece } from '../ChessPiece';
+import { BaseTile } from '../Tile';
+import ArrowScope from '../ArrowScope';
+
+// Logic
 import Position from '../../logic/position';
 import Mapping2D from '../../logic/mapping2d';
+import createWeightMap from '../../logic/weightMap';
+import { Board, ChessPointers, SearchResult, IterationResult } from '@cocacola-lover/knight_path_finder';
 
-import { createWeightMap } from '../../logic/weightMap';
-import { Board, ChessPointers, SearchResult } from '@cocacola-lover/knight_path_finder';
-
+// Interfaces
+import { BoardInterfaces, ChessPieceInterface, TileInterfaces, ArrowScopeInterface } from '../../logic/interfaces';
 import DisplayBoardInterfaces = BoardInterfaces.DisplayBoard;
 import TileLogic = TileInterfaces.TileLogic;
+
+/*
+    Display board display results of the iteration algorithm. 
+    Iteration is performed using knight_path_founder npm library.
+
+    Uses ArrowScope to draw arrows for better visualisation.
+*/
 
 
 export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfaces.Props) {
 
-    interface IteResult {
-        result: SearchResult;
-        from?: ChessPointers.BasicPointer | undefined;
-        to?: ChessPointers.BasicPointer | undefined;
-    }
+    // Convinience functions
 
     const setTileLogic = (position : Position, logic : TileLogic) => dispatch({
             type : DisplayBoardInterfaces.ActionTypes.SetTileLogic,
@@ -37,18 +42,19 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
 
     const {width, height} = settings;
 
+    // Iteration algo
+
     const iterationBoard = useMemo(() => {
 
         const logicBoard = new Board(height, width);
 
-        const passabilityMap = Mapping2D.converterMap<TileLogic, boolean>(
-            settings.boardLogic, (logic : TileLogic) => logic !== TileLogic.unpassable 
-            );
+        logicBoard.setPassability(
+            Mapping2D.converterMap<TileLogic, boolean>(
+                settings.boardLogic, (logic : TileLogic) => logic !== TileLogic.unpassable 
+            ).arr   
+        );
 
-        logicBoard.setPassability(passabilityMap.arr);
         logicBoard.setWeight(createWeightMap(height, width, settings.weightSettings).arr);
-
-        console.log(createWeightMap(height, width, settings.weightSettings).arr);
 
         return logicBoard;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -62,8 +68,9 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [settings.chessPiece, settings.pathFindingAlgo, iterationBoard])
 
-    const [searchResult, setSearchResult] = useState<IteResult>();
+    const [searchResult, setSearchResult] = useState<IterationResult>();
 
+    // Visualisation
     const [arrows, setArrows] = useState<ArrowScopeInterface.Line[]>([]);
     const [shadows, setShadows] = useState<Position[]>([]);
 
@@ -71,7 +78,7 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
     const [iterationPassed, setIterationPassed] = useState<number>(0);
     const [pathLength, setPathLength] = useState<number | null>(null);
 
-
+    // Refs
     const boardRef = useRef<HTMLDivElement>(null);
     const scopeRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +121,7 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
                 TileLogic.visited
             );
 
-            // Color squares that were just found
+            // Color squares that were found
             setTileLogicMany ((prevLogic) => {
                 const ans = prevLogic.copy();
     
@@ -197,7 +204,6 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
         setTileLogicMany((prev) => prev.map((value) => 
                 value === TileLogic.unpassable ? TileLogic.unpassable : TileLogic.notFound
         ));
-
         setArrows([]);
         setShadows([]);
         setSearchResult(undefined);
@@ -212,18 +218,17 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
             <BaseBoard boardRef={boardRef} className='DisplayBoard'
                 settings={settings}
                 createTile={
-                    (passable, pos, child) =>
-                    <DisplayTile
+                    (tileLogic, pos, child) =>
+                    <BaseTile
                         key={`${pos.x},${pos.y}`}
                         black={(pos.x + pos.y) % 2 === 1}
-                        passable={passable}
-                        tileLogic={settings.boardLogic.at(pos)}>
+                        tileLogic={tileLogic}>
                         {child}
-                    </DisplayTile>
+                    </BaseTile>
                 }
                 createPiece={(pos) => {
                     if (Position.same(pos, settings.knightPosition)) return <ChessPiece child={settings.chessPiece.pieceSVG} black={(pos.x + pos.y) % 2 === 0}/>
-                    if (Position.same(pos, settings.flagPosition)) return <ChessPiece child={ChessPieceInterface.FlagSVG} black={(pos.x + pos.y) % 2 === 0}/>
+                    if (Position.same(pos, settings.flagPosition)) return <ChessPiece child={ChessPieceInterface.SVGs.FlagSVG} black={(pos.x + pos.y) % 2 === 0}/>
                     for (let i = 0; i < shadows.length; i++) {
                         if (Position.same(pos, shadows[i])) return <ChessPiece
                         child={(color : string) => settings.chessPiece.pieceSVG(color, 0.5)}

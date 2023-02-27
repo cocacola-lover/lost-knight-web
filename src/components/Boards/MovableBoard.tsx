@@ -9,12 +9,17 @@ import { useState, useEffect, useRef } from 'react';
 
 import Position from '../../logic/position';
 
-import MovableBoardInterface = BoardInterfaces.MovableBoard;
-import Actions = MovableBoardInterface.ActionTypes;
+import Interface = BoardInterfaces.MovableBoard;
+import Actions = Interface.ActionTypes;
+
+/*
+    MovableBoard allows to move pieces on the board.
+
+    MovableChessPiece handles displaying the moving shadow. So MovableBoard just needs to place chess piece on mouseUp.
+*/
 
 
-
-export default function MovableBoard ({settings, dispatch} : MovableBoardInterface.Props) {
+export default function MovableBoard ({settings, dispatch} : Interface.Props) {
 
     const {flagPosition, knightPosition} = settings;
     
@@ -24,7 +29,6 @@ export default function MovableBoard ({settings, dispatch} : MovableBoardInterfa
     const boardRef = useRef<HTMLDivElement>(null);
     const sizes = useHTMLElementSizes(boardRef);
 
-    
 
     // Handle onMouseUp on board
     useEffect(() => {
@@ -83,11 +87,9 @@ export default function MovableBoard ({settings, dispatch} : MovableBoardInterfa
 
     const MovablePiece = (setMoving : (value: React.SetStateAction<boolean>) => void, sum : number, child :  (color: string) => JSX.Element) => {
         return <MovableChessPiece 
-        onDragStart={(event : Event) => {
-            setMoving(true)
-        }}
-        child={child}
+        onDragStart={() => setMoving(true)}
         black={(sum) % 2 === 0}
+        child={child}
         ></MovableChessPiece>
     }
 
@@ -95,17 +97,17 @@ export default function MovableBoard ({settings, dispatch} : MovableBoardInterfa
             <BaseBoard boardRef={boardRef} className='MovableBoard'
             settings={settings}
             createTile={
-                (passable, pos, child) => 
+                (tileLogic, pos, child) => 
                 <SensibleTile 
                     key={`${pos.x},${pos.y}`} 
                     black={(pos.x + pos.y) % 2 === 1}
-                    passable={passable}>
+                    tileLogic={tileLogic}>
                     {child}
                 </SensibleTile>                
             }
             createPiece={(pos) => {
                 if (Position.same(pos, knightPosition)) return MovablePiece(setKnightMoving, pos.x + pos.y, settings.chessPiece.pieceSVG)
-                else if (Position.same(pos, flagPosition))  return MovablePiece(setFlagMoving, pos.x + pos.y, ChessPieceInterface.FlagSVG)
+                else if (Position.same(pos, flagPosition))  return MovablePiece(setFlagMoving, pos.x + pos.y, ChessPieceInterface.SVGs.FlagSVG)
                 else return undefined;
             }}/>
             )

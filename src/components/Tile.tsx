@@ -3,63 +3,52 @@ import './css/Tile.css';
 import { useEffect, useRef } from 'react';
 import { TileInterfaces } from '../logic/interfaces';
 
-import TileLogic = TileInterfaces.TileLogic;
+import chooseColor = TileInterfaces.chooseColor;
+import tileClasses = TileInterfaces.tileClasses;
 
+/*
+    Tiles form grid of the Board.
 
-function BaseTile (props : TileInterfaces.BaseTileProps) {
+    BaseTile is a base component that displays information about the tile.
 
-    const color = props.black ? 'black' : 'white';
-    const passable = props.passable === false ? 'unpassable' : 'passable';
+    SensibleTile can mount some mouse listeners to itself.
 
-    return <div ref={props.tileRef} className={`Tile ${color} ${passable} ${props.additionalClassName ?? ''}`}>
+    Note for future : Might want to change to pointer listeners.
+*/
+
+export function BaseTile (props : TileInterfaces.BaseTileProps) {
+
+    let className = 'Tile ';
+    className += chooseColor(props.black ?? false) + ' ';
+    className += tileClasses[props.tileLogic] + ' ';
+    className += props.additionalClassName ?? '';
+
+    return <div ref={props.tileRef} className={className}>
         {props.children}
     </div>
 }
 
 export function SensibleTile (props : TileInterfaces.SensibleTileProps) {
+
     const tileRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const {onDragEnter, onMouseDown, onMouseEnter, onMouseUp} = props;
+        const {onMouseDown, onMouseEnter, onMouseUp} = props;
         const tile = tileRef.current
-        if (onDragEnter !== undefined) tile?.addEventListener("dragenter", onDragEnter);
         if (onMouseEnter !== undefined) tile?.addEventListener("mouseenter", onMouseEnter);
         if (onMouseDown !== undefined) tile?.addEventListener("mousedown", onMouseDown);
         if (onMouseUp !== undefined) tile?.addEventListener("mouseup", onMouseUp);
 
         return () => {
-            if (onDragEnter !== undefined) tile?.removeEventListener("dragenter", onDragEnter);
             if (onMouseEnter !== undefined) tile?.removeEventListener("mouseenter", onMouseEnter);
             if (onMouseDown !== undefined) tile?.removeEventListener("mousedown", onMouseDown);
             if (onMouseUp !== undefined) tile?.removeEventListener("mouseup", onMouseUp);
         }
         }, [props])
 
-    return <BaseTile tileRef={tileRef} passable={props.passable} black={props.black}>{props.children}</BaseTile>
-}
+    const {tileLogic, black, children} = props;
 
-export function DisplayTile (props : TileInterfaces.DisplayTileProps) {
-    const tileRef = useRef<HTMLDivElement>(null);
-
-    let tileLogic : string;
-
-    switch(props.tileLogic ?? TileLogic.notFound) {
-        case TileLogic.notFound :
-            tileLogic = '';
-            break;
-        case TileLogic.found : 
-            tileLogic = 'found';
-            break;
-        case TileLogic.visited : 
-            tileLogic = 'visited';
-            break;
-        case TileLogic.road : 
-            tileLogic='road';
-            break;
-        default : 
-            tileLogic='';
-            break;
-    }
-
-    return <BaseTile additionalClassName={tileLogic} tileRef={tileRef} passable={props.passable} black={props.black}>{props.children}</BaseTile>
+    return <BaseTile tileRef={tileRef} tileLogic={tileLogic} black={black}>
+        {children}
+    </BaseTile>
 }

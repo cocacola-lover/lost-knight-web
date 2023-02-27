@@ -4,14 +4,21 @@ import {useRef, useEffect, useState} from 'react';
 import { ChessPieceInterface } from '../logic/interfaces';
 import Position from '../logic/position';
 
+/*
+    These are components that represent chess pieces or the flag on the board.
+    Base ChessPiece component is used to represented information about a Chess Piece.
+
+    MovableChessPiece creates a ghost that follows cursor on pointerdown.
+    
+    POTENTIAL PROBLEMS : MovableChessPiece might not behave correctly if any of it's parents does not have static positioning.
+*/
+
 export function ChessPiece (props : ChessPieceInterface.ChessPieceProps) {
 
-    const dragabble = props.dragabble ?? false;
     const color = props.black ? 'black' : 'white';
 
     return <div 
         ref={props.chessPieceRef} 
-        draggable={dragabble} 
         className={`ChessPiece ${color} ${props.additionalClassName ?? ''}`}
         style={props.style}>
         {props.child(color)}
@@ -52,7 +59,7 @@ export function MovableChessPiece (props : ChessPieceInterface.MovableChessPiece
                     (event as MouseEvent).clientY
         ));
 
-        const handleOnMouseUp = (event : Event) => {
+        const handleOnMouseUp = () => {
             setFlying(false);
         }
         document.addEventListener('pointermove', handleOnMouseMove);

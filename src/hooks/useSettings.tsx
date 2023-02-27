@@ -1,15 +1,22 @@
 import { useReducer } from "react";
 
 import { Settings, ChessPieceInterface, TileInterfaces } from "../logic/interfaces";
+import { Board, ChessPointers, PathFindingIterators } from "@cocacola-lover/knight_path_finder";
+
 import Mapping2D from "../logic/mapping2d";
 import Position from "../logic/position";
 
-import { Board, ChessPointers, PathFindingIterators } from "@cocacola-lover/knight_path_finder";
-
 import TileLogic = TileInterfaces.TileLogic;
-import ActionTypes = Settings.ActionTypes;
-import SetTileLogicAction = Settings.SetTileLogicAction;
-import SetTileLogicManyAction = Settings.SetTileLogicManyAction;
+import ActionTypes = Settings.Enums.ActionTypes;
+import Algorithm = Settings.Enums.Algorithm;
+import Character = Settings.Enums.Character;
+import SVGs = ChessPieceInterface.SVGs;
+import SetTileLogicAction = Settings.SetActions.SetTileLogicAction;
+import SetTileLogicManyAction = Settings.SetActions.SetTileLogicManyAction;
+
+/*
+    Creates a reducer containing all iteration settings and ways to change them.
+*/
 
 export default function useSettings () {
 
@@ -80,20 +87,20 @@ export default function useSettings () {
 
             let algorithm = PathFindingIterators.dijkstraSearchIterator;
 
-            switch (action.payload as Settings.Algorithm) {
-                case Settings.Algorithm.Dijkstra : 
+            switch (action.payload as Algorithm) {
+                case Algorithm.Dijkstra : 
                     algorithm = PathFindingIterators.dijkstraSearchIterator;
                     break;
       
-                case Settings.Algorithm.DeepFirstSearch :
+                case Algorithm.DeepFirstSearch :
                     algorithm = PathFindingIterators.deepFirstSearchIterator;
                     break;
       
-                case Settings.Algorithm.Greedy : 
+                case Algorithm.Greedy : 
                     algorithm = PathFindingIterators.greedySearchIterator;
                     break;
       
-                case Settings.Algorithm.AStar :
+                case Algorithm.AStar :
                     algorithm = PathFindingIterators.aStarSearchIterator;
                     break;
             }
@@ -106,40 +113,40 @@ export default function useSettings () {
 
             let chessPiece : Settings.ChessPieceState;
 
-            switch (action.payload as Settings.Character) {
-                case Settings.Character.Knight : 
+            switch (action.payload as Character) {
+                case Character.Knight : 
                     chessPiece = {
-                        pieceSVG : ChessPieceInterface.KnightSVG,
+                        pieceSVG : SVGs.KnightSVG,
                         piecePointer : (x : number, y : number, board : Board) => new ChessPointers.KnightPointer(x, y, board.squares)
                     }
                     break;
-                case Settings.Character.Bishop : 
+                case Character.Bishop : 
                     chessPiece = {
-                        pieceSVG : ChessPieceInterface.BishopSVG,
+                        pieceSVG : SVGs.BishopSVG,
                         piecePointer : (x : number, y : number, board : Board) => new ChessPointers.BishopPointer(x, y, board.squares)
                     }
                     break;
-                case Settings.Character.King : 
+                case Character.King : 
                     chessPiece = {
-                        pieceSVG : ChessPieceInterface.KingSVG,
+                        pieceSVG : SVGs.KingSVG,
                         piecePointer : (x : number, y : number, board : Board) => new ChessPointers.KingPointer(x, y, board.squares)
                     }
                     break;
-                case Settings.Character.Rook : 
+                case Character.Rook : 
                     chessPiece = {
-                        pieceSVG : ChessPieceInterface.RookSVG,
+                        pieceSVG : SVGs.RookSVG,
                         piecePointer : (x : number, y : number, board : Board) => new ChessPointers.RookPointer(x, y, board.squares)
                     }
                     break;
-                case Settings.Character.Pawn : 
+                case Character.Pawn : 
                     chessPiece = {
-                        pieceSVG : ChessPieceInterface.PawnSVG,
+                        pieceSVG : SVGs.PawnSVG,
                         piecePointer : (x : number, y : number, board : Board) => new ChessPointers.PawnPointer(x, y, board.squares)
                     }
                     break;
-                case Settings.Character.Queen : 
+                case Character.Queen : 
                     chessPiece = {
-                        pieceSVG : ChessPieceInterface.QueenSVG,
+                        pieceSVG : SVGs.QueenSVG,
                         piecePointer : (x : number, y : number, board : Board) => new ChessPointers.QueenPointer(x, y, board.squares)
                     }
                     break;
@@ -180,10 +187,10 @@ export default function useSettings () {
     }
 
     return useReducer(reducer, {
-        width : 8,
-        height : 8,
+        width : 8, // Cannot be bigger than 20 and less than 0
+        height : 8, // Cannot be bigger than 20 and less than 0
+        iterationSpeed : Settings.Constants.iterationSpeedValues[4],
 
-        iterationSpeed : 500,
 
         boardLogic : new Mapping2D<TileInterfaces.TileLogic>(8, 8, TileInterfaces.TileLogic.notFound),
         weightSettings : {
@@ -198,7 +205,7 @@ export default function useSettings () {
 
         pathFindingAlgo : PathFindingIterators.dijkstraSearchIterator,
         chessPiece : {
-            pieceSVG : ChessPieceInterface.KnightSVG,
+            pieceSVG : SVGs.KnightSVG,
             piecePointer : (x : number, y : number, board : Board) => new ChessPointers.KnightPointer(x, y, board.squares)
         } as Settings.ChessPieceState
     } as Settings.Settings)

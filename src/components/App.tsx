@@ -1,16 +1,30 @@
+import './css/App.css';
+
 import {useState, useEffect} from 'react';
 import useSettings from '../hooks/useSettings';
 
-
 import SettingManager from './SettingsManager';
-import { AppInterfaces, Settings, TileInterfaces } from '../logic/interfaces';
 import {MovableBoard, DrawableBoard, DisplayBoard} from './Board';
 
+import { AppInterfaces, Settings, TileInterfaces } from '../logic/interfaces';
+
 import BoardState = AppInterfaces.BoardState;
-import Actions = Settings.ActionTypes;
+import Actions = Settings.Enums.ActionTypes;
 import TileLogic = TileInterfaces.TileLogic
 
-import './css/App.css';
+/*
+  An app consists of two major components : SettingsManager and Board.
+
+  SettingsManager component consists of input fields to change iterationSettings.
+
+  Board is a meta component that can be represented by 3 states which are components of the own:
+    * MovableBoard is used to move character piece and flag piece around the board.
+    * DrawableBoard is used to draw obstacles for path-finding.
+    * DisplayBoard is used to display iteration process to the user.
+
+  Switch between these states is handled by the SettingsManager.
+*/
+
 
 function App () {
 

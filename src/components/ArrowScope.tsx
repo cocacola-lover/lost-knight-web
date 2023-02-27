@@ -1,8 +1,17 @@
 import './css/ArrowScope.css';
+
 import { useState, useLayoutEffect } from 'react';
-import useHTMLElementSizes from '../hooks/useHTMLElementSizes';
 import { ArrowScopeInterface } from "../logic/interfaces";
+
+import useHTMLElementSizes from '../hooks/useHTMLElementSizes';
 import Position from '../logic/position';
+
+/*
+    Arrow is an absolutely positioned component that draws an arrow from one position in pixels to another.
+
+    ArrowScope component is relatively positioned component that wraps others, creates a grid and places arrows from the perspective of the grid.
+    ArrowScope devides itself into a grid of squares using height and width. Then places arrows using coordinates OF CENTERS of those squares.
+*/
 
 function Arrow (props : ArrowScopeInterface.ArrowProps) {
 
