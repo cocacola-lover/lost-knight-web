@@ -67,6 +67,11 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
     const [arrows, setArrows] = useState<ArrowScopeInterface.Line[]>([]);
     const [shadows, setShadows] = useState<Position[]>([]);
 
+    // Resulting Analysis
+    const [iterationPassed, setIterationPassed] = useState<number>(0);
+    const [pathLength, setPathLength] = useState<number | null>(null);
+
+
     const boardRef = useRef<HTMLDivElement>(null);
     const scopeRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +82,7 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
 
         const ite = () => {
             setSearchResult(iterate());
+            setIterationPassed((prev) => prev + 1);
         }
 
         scope?.addEventListener('click', ite);
@@ -157,6 +163,8 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
             // Draw Shadows and arrows for path
             let pos : ChessPointers.BasicPointer = 
                 piecePointer(settings.flagPosition.x, settings.flagPosition.y, iterationBoard);
+            let pathLength = 0;
+
             const roadArrows = [];
             const roadShadows = []
 
@@ -171,52 +179,56 @@ export default function DisplayBoard ({settings, dispatch} : DisplayBoardInterfa
                 else {
                     pos = pos.at().shortestPath as ChessPointers.BasicPointer;
                     roadShadows.push(new Position(pos.x, pos.y));
+                    pathLength++;
                 }
             }
+            setPathLength(pathLength);
             setArrows(roadArrows);
             setShadows(roadShadows);
         } 
         else {
-
+            setPathLength(Number.POSITIVE_INFINITY);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchResult])
 
     // Make sure full reset on change of props
     useEffect (() => {
-        console.log('fullreset')
-        setTileLogicMany((prev) => {
-            return prev.map((value, index1, index2) => 
-                value === TileLogic.unpassable ? TileLogic.unpassable : TileLogic.notFound);
-        });
+        setTileLogicMany((prev) => prev.map((value) => 
+                value === TileLogic.unpassable ? TileLogic.unpassable : TileLogic.notFound
+        ));
 
         setArrows([]);
         setShadows([]);
         setSearchResult(undefined);
+        setIterationPassed(0);
+        setPathLength(null);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [height, width, settings.pathFindingAlgo, settings.chessPiece, settings.weightSettings])
     
-    return <ArrowScope scopeRef={scopeRef} height={height} width={width} arrows={arrows}>
-        <BaseBoard boardRef={boardRef} className='DisplayBoard'
-            settings={settings}
-            createTile={
-                (passable, pos, child) => 
-                <DisplayTile
-                    key={`${pos.x},${pos.y}`}
-                    black={(pos.x + pos.y) % 2 === 1}
-                    passable={passable}
-                    // Save "At()""
-                    tileLogic={settings.boardLogic.at(pos)}>
-                    {child}
-                </DisplayTile>
-            }
-            createPiece={(pos) => {
-                if (Position.same(pos, settings.knightPosition)) return <ChessPiece child={settings.chessPiece.pieceSVG} black={(pos.x + pos.y) % 2 === 0}/>
-                if (Position.same(pos, settings.flagPosition)) return <ChessPiece child={ChessPieceInterface.FlagSVG} black={(pos.x + pos.y) % 2 === 0}/>
-                for (let i = 0; i < shadows.length; i++) {
-                    if (Position.same(pos, shadows[i])) return <ChessPiece 
-                    child={(color : string) => settings.chessPiece.pieceSVG(color, 0.5)} 
-                    black={(settings.knightPosition.x + settings.knightPosition.y) % 2 === 0}/>
-                }}}/>
-        </ArrowScope>
+    return (<div>
+        <div className={'scoreWatcher'}>{`Iterations has passed : ${iterationPassed} ${pathLength === null ? '' : `    Shortest Path length is ${pathLength}`}`}</div>
+        <ArrowScope scopeRef={scopeRef} height={height} width={width} arrows={arrows}>
+            <BaseBoard boardRef={boardRef} className='DisplayBoard'
+                settings={settings}
+                createTile={
+                    (passable, pos, child) =>
+                    <DisplayTile
+                        key={`${pos.x},${pos.y}`}
+                        black={(pos.x + pos.y) % 2 === 1}
+                        passable={passable}
+                        tileLogic={settings.boardLogic.at(pos)}>
+                        {child}
+                    </DisplayTile>
+                }
+                createPiece={(pos) => {
+                    if (Position.same(pos, settings.knightPosition)) return <ChessPiece child={settings.chessPiece.pieceSVG} black={(pos.x + pos.y) % 2 === 0}/>
+                    if (Position.same(pos, settings.flagPosition)) return <ChessPiece child={ChessPieceInterface.FlagSVG} black={(pos.x + pos.y) % 2 === 0}/>
+                    for (let i = 0; i < shadows.length; i++) {
+                        if (Position.same(pos, shadows[i])) return <ChessPiece
+                        child={(color : string) => settings.chessPiece.pieceSVG(color, 0.5)}
+                        black={(settings.knightPosition.x + settings.knightPosition.y) % 2 === 0}/>
+                    }}}/>
+            </ArrowScope>
+    </div>)
 }
